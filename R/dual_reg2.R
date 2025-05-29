@@ -13,11 +13,11 @@
 #'
 #'  If \code{BOLD2} is not provided, \code{BOLD} will be split in half;
 #'  the first half will be the test data and the second half will be the retest data.
-#' @param template The group ICA map or parcellation as a (vectorized) numeric 
+#' @param template The group ICA map or parcellation as a (vectorized) numeric
 #'  matrix (\eqn{V \times Q}). If it's an ICA map, its columns will be centered.
-#' @param template_parc_table If the template is a parcellation, provide the 
+#' @param template_parc_table If the template is a parcellation, provide the
 #'  parcellation table here. Default: \code{NULL}.
-#' @param keepA Keep the resulting \strong{A} matrices, or only return the 
+#' @param keepA Keep the resulting \strong{A} matrices, or only return the
 #'  \strong{S} matrices (default)?
 #' @inheritParams scale_Param
 #' @param scale_sm_surfL,scale_sm_surfR,scale_sm_FWHM Only applies if
@@ -36,16 +36,28 @@
 #'  To create a \code{"surf"} object from data, see
 #'  \code{\link[ciftiTools]{make_surf}}. The surfaces must be in the same
 #'  resolution as the \code{BOLD} data.
-#' @param scrub (Optional) Numeric vectors of integers indicating the indices
+#' @param nuisance (Optional) Nuisance matrix to regress from the BOLD data.
+#'  If \code{BOLD2} is provided, should be a length-2 list with the first entry
+#'  corresponding to \code{BOLD} and the second to \code{BOLD2}. If \code{NULL},
+#'  do not remove any nuisance signals.
+#'
+#'  Nuisance regression is performed in a simultaneous regression with any spike
+#'  regressors from \code{scrub} and DCT bases from \code{hpf}.
+#'
+#'  Note that the nuisance matrices should be provided with timepoints matching
+#'  the original \code{BOLD} and \code{BOLD2} irregardless of \code{drop_first}.
+#'  Nuisance matrices will be truncated automatically if \code{drop_first>0}.
+#' @param scrub (Optional) Numeric vector of integers giving the indices
 #'  of volumes to scrub from the BOLD data. (List the volumes to remove, not the
 #'  ones to keep.) If \code{BOLD2} is provided, should be a length-two list with
-#'  the first corresponding to \code{BOLD} and the second to \code{BOLD2}. 
-#'  Scrubbing is performed within nuisance regression by adding a spike
-#'  regressor to the nuisance design matrix for each volume to scrub. If
-#'  \code{NULL} (default), do not scrub.
-#' 
-#'  Note that indices are counted beginning with the first index in the 
-#'  \code{BOLD} session irregardless of \code{drop_first}. 
+#'  the first entry corresponding to \code{BOLD} and the second to \code{BOLD2}.
+#'
+#'  Scrubbing is performed within a nuisance regression by adding a spike
+#'  regressor to the nuisance design matrix for each volume to scrub.
+#'
+#'  Note that indices are counted beginning with the first index in the
+#'  \code{BOLD} session irregardless of \code{drop_first}. The indices will be
+#'  adjusted automatically if \code{drop_first>0}.
 #' @param drop_first (Optional) Number of volumes to drop from the start of each
 #'  BOLD session. Default: \code{0}.
 #' @inheritParams TR_param
@@ -106,10 +118,11 @@ dual_reg2 <- function(
   keepA=FALSE,
   scale=c("local", "global", "none"),
   scale_sm_surfL=NULL, scale_sm_surfR=NULL, scale_sm_FWHM=2,
+  nuisance=NULL,
   scrub=NULL, drop_first=0,
-  TR=NULL, hpf=.01,
+  hpf=0, TR=NULL,
   GSR=FALSE,
-  Q2=0, Q2_max=NULL, 
+  Q2=0, Q2_max=NULL,
   NA_limit=.1,
   brainstructures="all", resamp_res=NULL,
   varTol=1e-6, maskTol=.1,
@@ -208,13 +221,21 @@ dual_reg2 <- function(
   ldB <- length(dim(BOLD))
   nT <- dim(BOLD)[ldB]
 
-  # `drop_first` for `BOLD` (`scrub` handled later)
+  # `drop_first` for `BOLD` (`scrub` and `nuisance` handled later)
   if (drop_first > 0) {
     stopifnot(drop_first < nT)
-    BOLD <- BOLD[,-seq(drop_first),drop=FALSE]
-    if (!is.null(BOLD2)) {
+    if (ldB==2) {
+      BOLD <- BOLD[,-seq(drop_first),drop=FALSE]
+    } else if (ldB==3) {
+      BOLD <- BOLD[,,-seq(drop_first),drop=FALSE]
+    }
+    if (retest) {
       stopifnot(drop_first < ncol(BOLD2))
-      BOLD2 <- BOLD2[,-seq(drop_first),drop=FALSE]
+      if (ldB==2) {
+        BOLD2 <- BOLD2[,-seq(drop_first),drop=FALSE]
+      } else if (ldB==3) {
+        BOLD2 <- BOLD2[,,-seq(drop_first),drop=FALSE]
+      }
     }
   }
   dBOLD <- dim(BOLD)
@@ -289,36 +310,119 @@ dual_reg2 <- function(
     }
   }
 
-  # Scrubbing ------------------------------------------------------------------
-  if (!is.null(scrub)) {
-    if (is.null(BOLD2)) {
-      if (length(scrub) > 0) {
+  # Nuisance regression and scrubbing. -----------------------------------------
+  add_to_nuis <- function(x, nuis) {
+    print(ncol(x))
+    if (is.null(nuis)) { x } else { cbind(x, nuis) }
+  }
+
+  nmat <- NULL
+  if (retest) { nmat2 <- NULL }
+  nT_pre <- dim(BOLD)[ldB]
+  if (retest) { nT_pre2 <- dim(BOLD2)[ldB] }
+
+  ## `nuisance`
+  if (!is.null(nuisance)) {
+    if (retest) {
+      stopifnot(is.list(nuisance))
+      stopifnot(length(nuisance)==2)
+      if (!is.null(nuisance[[1]])) {
+        stopifnot(is.numeric(nuisance[[1]]) && is.matrix(nuisance[[1]]))
         if (drop_first > 0) {
-          scrub <- scrub[scrub > drop_first] - drop_first
+          nuisance[[1]] <- nuisance[[1]][-seq(drop_first),,drop=FALSE]
         }
-        scrub_mat <- fMRIscrub::flags_to_nuis_spikes(scrub, ncol(BOLD))
-        BOLD <- nuisance_regression(BOLD, cbind(1, scrub_mat))
+        stopifnot(nrow(nuisance[[1]]) == nT_pre)
+        nmat <- add_to_nuis(nuisance[[1]], nmat)
       }
+      if (!is.null(nuisance[[2]])) {
+        stopifnot(is.numeric(nuisance[[2]]) && is.matrix(nuisance[[2]]))
+        if (drop_first > 0) {
+          nuisance[[2]] <- nuisance[[2]][-seq(drop_first),,drop=FALSE]
+        }
+        stopifnot(nrow(nuisance[[2]]) == nT_pre2)
+        nmat2 <- add_to_nuis(nuisance[[2]], nmat2)
+      }
+
     } else {
+      if (!is.null(nuisance)) {
+        stopifnot(is.numeric(nuisance) && is.matrix(nuisance))
+        if (drop_first > 0) {
+          nuisance <- nuisance[-seq(drop_first),,drop=FALSE]
+        }
+        stopifnot(nrow(nuisance) == nT_pre)
+        nmat <- add_to_nuis(nuisance, nmat)
+      }
+    }
+  }
+
+  if (!is.null(scrub)) {
+    if (retest) {
       if (length(scrub[[1]]) > 0) {
         if (drop_first > 0) {
           scrub[[1]] <- scrub[[1]][scrub[[1]] > drop_first] - drop_first
         }
-        scrub_mat <- fMRIscrub::flags_to_nuis_spikes(scrub[[1]], ncol(BOLD))
-        BOLD <- nuisance_regression(BOLD, cbind(1, scrub_mat))
+        if (length(scrub[[1]]) > 0) {
+          scrub_mat <- fMRIscrub::flags_to_nuis_spikes(scrub[[1]], nT_pre)
+          nmat <- add_to_nuis(scrub_mat, nmat)
+        }
       }
       if (length(scrub[[2]]) > 0) {
         if (drop_first > 0) {
           scrub[[2]] <- scrub[[2]][scrub[[2]] > drop_first] - drop_first
         }
-        scrub_mat <- fMRIscrub::flags_to_nuis_spikes(scrub[[2]], ncol(BOLD2))
-        BOLD2 <- nuisance_regression(BOLD2, cbind(1, scrub_mat))
+        if (length(scrub[[2]]) > 0) {
+          scrub_mat <- fMRIscrub::flags_to_nuis_spikes(scrub[[2]], nT_pre2)
+          nmat2 <- add_to_nuis(scrub_mat, nmat2)
+        }
+      }
+    } else {
+      if (length(scrub) > 0) {
+        if (drop_first > 0) {
+          scrub <- scrub[scrub > drop_first] - drop_first
+        }
+        if (length(scrub) > 0) {
+          scrub_mat <- fMRIscrub::flags_to_nuis_spikes(scrub, nT_pre)
+          nmat <- add_to_nuis(scrub_mat, nmat)
+        }
       }
     }
-
-    dBOLD <- dim(BOLD)
-    nT <- dim(BOLD)[ldB]
   }
+
+  ## DCT
+  if (hpf != 0) {
+    if (TR=="from_xifti_metadata") {
+      stop("`hpf!=0`, but `TR`` was neither provided nor able to be inferred from the data. Please provide `TR`.")
+    }
+    nDCT <- round(dct_convert(nT_pre, TR=TR, f=hpf))
+    nmat <- add_to_nuis(dct_bases(nT_pre, nDCT), nmat)
+    if (retest) {
+      nDCT <- round(dct_convert(nT_pre2, TR=TR, f=hpf))
+      nmat2 <- add_to_nuis(dct_bases(nT_pre2, nDCT), nmat2)
+    }
+  }
+
+  # nmat <- add_to_nuis(as.matrix(rep(1, nT_pre)), nmat) # TEMP
+
+  ## Perform nuisance regression, and drop scrubbed volumes, if applicable. ----
+  if (!is.null(nmat)) {
+    nmat <- add_to_nuis(1, nmat)
+    BOLD <- nuisance_regression(BOLD, nmat)
+    if (retest) {
+      if (length(scrub[[1]]) > 0) { BOLD <- BOLD[,-scrub[[1]],drop=FALSE] }
+    } else {
+      if (length(scrub) > 0) { BOLD <- BOLD[,-scrub,drop=FALSE] }
+    }
+  }
+  if (retest && !is.null(nmat2)) {
+    nmat2 <- add_to_nuis(1, nmat2)
+    BOLD2 <- nuisance_regression(BOLD2, nmat2)
+    if (length(scrub[[2]]) > 0) { BOLD2 <- BOLD2[,-scrub[[2]],drop=FALSE]}
+  }
+
+  hpf <- 0 # Done already!
+
+  dBOLD <- dim(BOLD)
+  nT <- dim(BOLD)[ldB]
 
   # Prep for dual regression ---------------------------------------------------
 
@@ -330,7 +434,7 @@ dual_reg2 <- function(
   this_norm_BOLD <- function(B){ norm_BOLD(
     B, center_rows=TRUE, center_cols=GSR,
     scale=scale, scale_sm_xifti=xii1, scale_sm_FWHM=scale_sm_FWHM,
-    TR=TR, hpf=hpf
+    hpf=hpf, TR=TR
   ) }
 
   DR_FUN <- if (template_parc) {
@@ -348,7 +452,7 @@ dual_reg2 <- function(
   dual_reg_yesNorm <- function(B){ DR_FUN(
     B, template=template, parc_vals=template_parc_table$Key,
     scale=scale, scale_sm_xifti=xii1, scale_sm_FWHM=scale_sm_FWHM,
-    TR=TR, hpf=hpf, GSR=GSR
+    hpf=hpf, TR=TR, GSR=GSR
   ) }
 
   dual_reg_noNorm <- function(B){ DR_FUN(
@@ -358,8 +462,8 @@ dual_reg2 <- function(
 
   # Get the first dual regression results. -------------------------------------
   if (verbose) { cat("\n\tDual regression... ") }
-  # If using pseudo-retest data, compute DR on the halves of `BOLD`.
-  # Do this before normalizating `BOLD` so to avoid normalizing twice.
+  BOLD <- this_norm_BOLD(BOLD) # note that the halves get normalized again. [TO DO] fix/make efficient?
+  # but this normalization step was added so that sigma_sq is correctly calculated.
   if (!retest) {
     part1 <- seq(round(nT/2))
     part2 <- setdiff(seq(nT), part1)
@@ -367,7 +471,6 @@ dual_reg2 <- function(
     out$retest <- dual_reg_yesNorm(BOLD[, part2, drop=FALSE])
   } else {
     # If retest, normalize `BOLD` and `BOLD2`, and then compute DR.
-    BOLD <- this_norm_BOLD(BOLD)
     BOLD2 <- this_norm_BOLD(BOLD2)
     # (No need to normalize again.)
     out$test <- dual_reg_noNorm(BOLD)

@@ -6,7 +6,9 @@
 \usage{
 \method{plot}{prior.cifti}(
   x,
-  stat = c("both", "mean", "sd", "var"),
+  stat = c("mean", "sd", "var"),
+  maps = TRUE,
+  FC = c("emp", "IW", "Chol", "none"),
   var_method = c("non-negative", "unbiased"),
   ...
 )
@@ -14,9 +16,14 @@
 \arguments{
 \item{x}{The prior from \code{estimate_prior.cifti}}
 
-\item{stat}{\code{"mean"}, \code{"sd"}, or \code{"both"} (default). By
-default the square root of the variance prior is shown; another option is
-\code{stat="var"} to instead display the variance prior directly.}
+\item{stat}{Which prior statistic to plot: the \code{"mean"} (default),
+\code{"sd"} for the square root of the variance template, or \code{"var"}
+for the variance template.}
+
+\item{maps}{Show the prior maps on the brain? Default: \code{TRUE}.}
+
+\item{FC}{Empirical (\code{"emp"}) (default), Inverse-Wishart
+(\code{"IW"}), Cholesky (\code{"Chol"}), or \code{"none"}.}
 
 \item{var_method}{\code{"non-negative"} (default) or \code{"unbiased"}}
 

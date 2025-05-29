@@ -313,15 +313,21 @@ print.prior.matrix <- function(x, ...) {
 #' Plot prior
 #'
 #' @param x The prior from \code{estimate_prior.cifti}
-#' @param stat \code{"mean"}, \code{"sd"}, or \code{"both"} (default). By
-#'  default the square root of the variance prior is shown; another option is
-#'  \code{stat="var"} to instead display the variance prior directly.
+#' @param stat Which prior statistic to plot: the \code{"mean"} (default), 
+#'  \code{"sd"} for the square root of the variance template, or \code{"var"}
+#'  for the variance template. 
+#' @param maps Show the prior maps on the brain? Default: \code{TRUE}.
+#' @param FC Empirical (\code{"emp"}) (default), Inverse-Wishart 
+#'  (\code{"IW"}), Cholesky (\code{"Chol"}), or \code{"none"}.
 #' @param var_method \code{"non-negative"} (default) or \code{"unbiased"}
 #' @param ... Additional arguments to \code{view_xifti}
 #' @return The plot
 #' @export
 #' @method plot prior.cifti
-plot.prior.cifti <- function(x, stat=c("both", "mean", "sd", "var"),
+plot.prior.cifti <- function(x, 
+  stat=c("mean", "sd", "var"),
+  maps=TRUE,
+  FC=c("emp", "IW", "Chol", "none"),
   var_method=c("non-negative", "unbiased"), ...) {
   stopifnot(inherits(x, "prior.cifti"))
 
@@ -338,26 +344,7 @@ plot.prior.cifti <- function(x, stat=c("both", "mean", "sd", "var"),
   has_fname <- "fname" %in% names(args)
 
   # Check `stat`
-  stat <- tolower(stat)
-  if (has_idx && length(args$idx)>1 && !("fname" %in% names(args))) {
-    if (identical(stat, c("both", "mean", "sd", "var"))) {
-      stat <- "mean"
-    } else {
-      stat <- match.arg(stat, c("both", "mean", "sd", "var"))
-    }
-    if (stat == "both") {
-      if (!("fname" %in% names(args))) {
-        warning(
-          "For multiple `idx`, use one call to plot() ",
-          "for the mean prior, ",
-          "and a separate call for the variance prior. ",
-          "Showing the mean prior now."
-        )
-        stat <- "mean"
-      }
-    }
-  }
-  stat <- match.arg(stat, c("both", "mean", "sd", "var"))
+  stat <- match.arg(stat, c("mean", "sd", "var"))
 
   # Print message saying what's happening.
   msg1 <- ifelse(has_idx,
@@ -365,7 +352,6 @@ plot.prior.cifti <- function(x, stat=c("both", "mean", "sd", "var"),
     "Plotting the first component's"
   )
   msg2 <- switch(stat,
-    both="mean and sqrt(variance) prior.",
     mean="mean prior.",
     sd="sqrt(variance) prior.",
     var="variance prior."
@@ -374,7 +360,6 @@ plot.prior.cifti <- function(x, stat=c("both", "mean", "sd", "var"),
 
   # Plot
   out <- list(mean=NULL, var=NULL)
-  if (stat == "both") { stat <- c("mean", "sd") }
   for (ss in stat) {
     ssname <- if (ss == "mean") {
       ss

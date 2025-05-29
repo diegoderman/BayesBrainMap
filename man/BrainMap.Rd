@@ -15,8 +15,8 @@ BrainMap(
   nuisance = NULL,
   scrub = NULL,
   drop_first = 0,
-  TR = NULL,
   hpf = "prior",
+  TR = NULL,
   GSR = "prior",
   Q2 = "prior",
   Q2_max = "prior",
@@ -95,7 +95,7 @@ added to \code{nuisance}. If \code{NULL}, no extra nuisance signals will be
 regressed from the data, but a nuisance regression will still be used if
 warranted by \code{scrub} or \code{hpf}.}
 
-\item{scrub}{(Optional) A numeric vector of integers indicating the indices
+\item{scrub}{(Optional) A numeric vector of integers giving the indices
 of volumes to scrub from the BOLD data. (List the volumes to remove, not the
 ones to keep.) If multiple \code{BOLD} sessions are provided, this
 argument can be a list to remove different volumes for different sessions.

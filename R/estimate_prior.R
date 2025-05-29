@@ -267,21 +267,21 @@ Chol_samp_fun <- function(Chol_vals, p, M, chol_diag, chol_offdiag, Chol_mat_bla
 #'  half will be the retest data.
 #' @param template Group-level template: either a group ICA (GICA), or a
 #'  parcellation.
-#' 
-#'  A GICA should be provided as a format compatible with \code{BOLD}, or a 
-#'  (vectorized) numeric matrix (\eqn{V \times Q}). Its columns will be 
+#'
+#'  A GICA should be provided as a format compatible with \code{BOLD}, or a
+#'  (vectorized) numeric matrix (\eqn{V \times Q}). Its columns will be
 #'  centered.
-#' 
-#'  A parcellation must be in CIFTI format for use with CIFTI BOLD data (other 
-#'  formats to be implemented in the future). The parcellation should have the 
+#'
+#'  A parcellation must be in CIFTI format for use with CIFTI BOLD data (other
+#'  formats to be implemented in the future). The parcellation should have the
 #'  same locations as the BOLD and one column, with integer values indicating
-#'  the parcel to which each location belongs to. Each parcel is modeled as a 
-#'  brain map; instead of the first step of dual regression, the medial 
+#'  the parcel to which each location belongs to. Each parcel is modeled as a
+#'  brain map; instead of the first step of dual regression, the medial
 #'  timecourse of each parcel is used.
 #'
 #' @param mask Required if the entries of \code{BOLD} are NIFTI
 #'  file paths or \code{"nifti"} objects, optional for other formats. For
-#'  NIFTI, this is a binary array of the same spatial dimensions as the fMRI 
+#'  NIFTI, this is a binary array of the same spatial dimensions as the fMRI
 #'  data, with \code{TRUE} corresponding to in-mask voxels. For other formats,
 #'  a logical vector.
 #' @param inds Numeric indices of the networks in \code{template} to include in
@@ -308,18 +308,34 @@ Chol_samp_fun <- function(Chol_vals, p, M, chol_diag, chol_offdiag, Chol_mat_bla
 #'  To create a \code{"surf"} object from data, see
 #'  \code{\link[ciftiTools]{make_surf}}. The surfaces must be in the same
 #'  resolution as the \code{BOLD} data.
-#' @param scrub (Optional) Numeric vectors of integers indicating the indices
+#' @param nuisance (Optional) Nuisance matrices to regress from the BOLD data.
+#'  Should be a list of matrices, with time along the rows and nuisance signals
+#'  along the columns, where each entry corresponds to a \code{BOLD} session;
+#'  or, if \code{BOLD2} is provided, should be a length-2 list of such lists
+#'  with the first sublist corresponding to \code{BOLD} and the second sublist
+#'  corresponding to \code{BOLD2}. If \code{NULL}, do not remove any nuisance
+#'  signals.
+#'
+#'  Nuisance regression is performed in a simultaneous regression with any spike
+#'  regressors from \code{scrub} and DCT bases from \code{hpf}.
+#'
+#'  Note that the nuisance matrices should be provided with timepoints matching
+#'  the original \code{BOLD} and \code{BOLD2} irregardless of \code{drop_first}.
+#'  Nuisance matrices will be truncated automatically if \code{drop_first>0}.
+#' @param scrub (Optional) Numeric vectors of integers giving the indices
 #'  of volumes to scrub from the BOLD data. (List the volumes to remove, not the
-#'  ones to keep.) Should be a list of such vectors, where each entry 
+#'  ones to keep.) Should be a list of such vectors, where each entry
 #'  corresponds to a \code{BOLD} session; or, if \code{BOLD2} is provided,
-#'  should be a list of such lists with the first sublist corresponding to
-#'  \code{BOLD} and the second sublist corresponding to \code{BOLD2}. 
-#'  Scrubbing is performed within nuisance regression by adding a spike
-#'  regressor to the nuisance design matrix for each volume to scrub. If
+#'  should be a length-2 list of such lists with the first sublist corresponding
+#'  to \code{BOLD} and the second sublist corresponding to \code{BOLD2}. If
 #'  \code{NULL} (default), do not scrub.
-#' 
-#'  Note that indices are counted beginning with the first index in the 
-#'  \code{BOLD} session irregardless of \code{drop_first}. 
+#'
+#'  Scrubbing is performed within a nuisance regression by adding a spike
+#'  regressor to the nuisance design matrix for each volume to scrub.
+#'
+#'  Note that indices are counted beginning with the first index in the
+#'  \code{BOLD} session irregardless of \code{drop_first}. The indices will be
+#'  adjusted automatically if \code{drop_first>0}.
 #' @param drop_first (Optional) Number of volumes to drop from the start of each
 #'  BOLD session. Default: \code{0}.
 #' @inheritParams TR_param
@@ -334,10 +350,10 @@ Chol_samp_fun <- function(Chol_vals, p, M, chol_diag, chol_offdiag, Chol_mat_bla
 #' @param resamp_res Only applies if the entries of \code{BOLD} are CIFTI file paths.
 #'  Resample the data upon reading it in? Default: \code{NULL} (no resampling).
 #' @param mask Required if \code{BOLD} are NIFTI file paths or \code{"nifti"}
-#'  objects, and optional for other formats. For NIFTI data, this is a logical 
-#'  array of the same spatial dimensions as the fMRI data, with \code{TRUE} 
+#'  objects, and optional for other formats. For NIFTI data, this is a logical
+#'  array of the same spatial dimensions as the fMRI data, with \code{TRUE}
 #'  corresponding to in-mask voxels. For other data, this is a logical vector
-#'  with the same length as the number of locations in \code{template}, with 
+#'  with the same length as the number of locations in \code{template}, with
 #'  \code{TRUE} corresponding to in-mask locations.
 #' @param keep_S Keep the DR estimates of S? If \code{FALSE} (default), do not save
 #'  the DR estimates and only return the priors. If \code{TRUE}, the DR
@@ -366,8 +382,8 @@ Chol_samp_fun <- function(Chol_vals, p, M, chol_diag, chol_offdiag, Chol_mat_bla
 #'  If \code{is.null(Q2)}, use \code{Q2_max} to specify the maximum number of
 #'  nuisance ICs that should be estimated by PESEL. \code{Q2_max} must be less
 #'  than \eqn{T * .75 - Q} where \eqn{T} is the minimum number of timepoints in
-#'  each fMRI scan and \eqn{Q} is the number of networks in the \code{template}. 
-#'  If \code{NULL} (default), \code{Q2_max} will be set to \eqn{T * .50 - Q}, 
+#'  each fMRI scan and \eqn{Q} is the number of networks in the \code{template}.
+#'  If \code{NULL} (default), \code{Q2_max} will be set to \eqn{T * .50 - Q},
 #'  rounded.
 #' @param covariates Subjects by variables numeric matrix of covariates to take
 #'  into account for model estimation. Column names should give the name of each
@@ -448,19 +464,29 @@ estimate_prior <- function(
   inds=NULL,
   scale=c("local", "global", "none"),
   scale_sm_surfL=NULL,
-  scale_sm_surfR=NULL, scale_sm_FWHM=2,
-  scrub=NULL, drop_first=0,
-  TR=NULL, hpf=.01,
+  scale_sm_surfR=NULL,
+  scale_sm_FWHM=2,
+  nuisance=NULL,
+  scrub=NULL,
+  drop_first=0,
+  hpf=0,
+  TR=NULL,
   GSR=FALSE,
-  Q2=0, Q2_max=NULL,
+  Q2=0,
+  Q2_max=NULL,
   covariates=NULL,
-  brainstructures="all", resamp_res=NULL,
-  keep_S=FALSE, keep_FC=FALSE,
+  brainstructures="all",
+  resamp_res=NULL,
+  keep_S=FALSE,
+  keep_FC=FALSE,
   FC=TRUE,
   FC_nPivots=100,
   FC_nSamp=50000,
-  varTol=1e-6, maskTol=.1, missingTol=.1,
-  usePar=FALSE, wb_path=NULL,
+  varTol=1e-6,
+  maskTol=.1,
+  missingTol=.1,
+  usePar=FALSE,
+  wb_path=NULL,
   verbose=TRUE) {
 
   # Check arguments ------------------------------------------------------------
@@ -635,16 +661,28 @@ estimate_prior <- function(
     scale_sm_FWHM <- 0
   }
 
+  if (!is.null(nuisance)) {
+    if (!real_retest) {
+      stopifnot(is.list(nuisance) && length(nuisance)==nN)
+    } else {
+      stopifnot(is.list(nuisance) && length(nuisance)==2)
+      stopifnot(is.list(nuisance[[1]]) && length(nuisance[[1]])==nN)
+      stopifnot(is.list(nuisance[[2]]) && length(nuisance[[2]])==nN)
+      # Remake into a length-nN list of length-2 lists
+      nuisance <- lapply(seq(nN), function(x){ list(nuisance[[1]][[nN]], nuisance[[2]][[nN]]) })
+    }
+  }
+
   if (!is.null(scrub)) {
-    if (is.null(BOLD2)) {
+    if (!real_retest) {
       stopifnot(is.list(scrub) && length(scrub)==nN)
     } else {
       stopifnot(is.list(scrub) && length(scrub)==2)
       stopifnot(is.list(scrub[[1]]) && length(scrub[[1]])==nN)
       stopifnot(is.list(scrub[[2]]) && length(scrub[[2]])==nN)
+      # Remake into a length-nN list of length-2 lists
+      scrub <- lapply(seq(nN), function(x){ list(scrub[[1]][[nN]], scrub[[2]][[nN]]) })
     }
-    # Remake into a length-nN list of length-2 lists
-    scrub <- lapply(seq(nN), function(x){ list(scrub[[1]][[nN]], scrub[[2]][[nN]]) })
   }
 
   # [TO DO]: Mysteriously, RDS format is not working with parallel.
@@ -833,12 +871,12 @@ estimate_prior <- function(
     }
     cat('Number of training subjects:   ', nN, "\n")
     cat('Number of covariates:          ', nC, "\n")
-    if (FC) { 
+    if (FC) {
       if (FC_nPivots == 0) {
-        cat('\nIncluding Cholesky-based FC prior with', 
+        cat('\nIncluding Cholesky-based FC prior with',
           FC_nPivots, 'random pivots.\n')
       } else {
-        cat(paste0('\nIncluding Cholesky-based FC prior with ', 
+        cat(paste0('\nIncluding Cholesky-based FC prior with ',
           FC_nSamp, " samples (", FC_nPivots, " random pivots x ",
           FC_nSamp2, " samples per pivot).\n"))
       }
@@ -897,8 +935,9 @@ estimate_prior <- function(
         scale=scale,
         scale_sm_surfL=scale_sm_surfL, scale_sm_surfR=scale_sm_surfR,
         scale_sm_FWHM=scale_sm_FWHM,
+        nuisance=nuisance[[ii]],
         scrub=scrub[[ii]], drop_first=drop_first,
-        TR=TR, hpf=hpf,
+        hpf=hpf, TR=TR,
         Q2=Q2, Q2_max=Q2_max,
         brainstructures=brainstructures, resamp_res=resamp_res,
         varTol=varTol, maskTol=maskTol,
@@ -968,8 +1007,9 @@ estimate_prior <- function(
         scale=scale,
         scale_sm_surfL=scale_sm_surfL, scale_sm_surfR=scale_sm_surfR,
         scale_sm_FWHM=scale_sm_FWHM,
+        nuisance=nuisance[[ii]],
         scrub=scrub[[ii]], drop_first=drop_first,
-        TR=TR, hpf=hpf,
+        hpf=hpf, TR=TR,
         Q2=Q2, Q2_max=Q2_max,
         brainstructures=brainstructures, resamp_res=resamp_res,
         varTol=varTol, maskTol=maskTol,
@@ -1007,7 +1047,6 @@ estimate_prior <- function(
   }
 
   # Aggregate results, and compute priors. ----------------------------------
-
   # Mask out locations for which too many subjects do not have data
   #   because of missing values or low variance.
   nVm <- nV # `nVm` will be the number of locations after masking with `mask2`.
@@ -1198,7 +1237,7 @@ estimate_prior <- function(
     inds=inds,
     GSR=GSR, scale=scale,
     scale_sm_FWHM=scale_sm_FWHM,
-    TR=TR, hpf=hpf,
+    hpf=hpf, TR=TR,
     Q2=Q2, Q2_max=Q2_max,
     covariate_names=covariate_names,
     brainstructures=brainstructures, resamp_res=resamp_res,
@@ -1254,12 +1293,15 @@ estimate_prior.cifti <- function(
   template, inds=NULL,
   scale=c("local", "global", "none"),
   scale_sm_surfL=NULL, scale_sm_surfR=NULL, scale_sm_FWHM=2,
-  TR=NULL, hpf=.01,
+  nuisance=NULL,
+  scrub=NULL,
+  drop_first=0,
+  hpf=0, TR=NULL,
   GSR=FALSE,
   Q2=0, Q2_max=NULL,
   brainstructures="all", resamp_res=resamp_res,
   keep_S=FALSE, keep_FC=FALSE,
-  FC=FALSE,
+  FC=TRUE,
   varTol=1e-6, maskTol=.1, missingTol=.1,
   usePar=FALSE, wb_path=NULL,
   verbose=TRUE) {
@@ -1269,7 +1311,8 @@ estimate_prior.cifti <- function(
     template=template, inds=inds,
     scale=scale, scale_sm_surfL=scale_sm_surfL, scale_sm_surfR=scale_sm_surfR,
     scale_sm_FWHM=scale_sm_FWHM,
-    TR=TR, hpf=hpf,
+    nuisance=nuisance, scrub=scrub, drop_first=drop_first,
+    hpf=hpf, TR=TR,
     GSR=GSR,
     Q2=Q2, Q2_max=Q2_max,
     brainstructures=brainstructures, resamp_res=resamp_res,
@@ -1288,12 +1331,15 @@ estimate_prior.gifti <- function(
   template, inds=NULL,
   scale=c("local", "global", "none"),
   scale_sm_surfL=NULL, scale_sm_surfR=NULL, scale_sm_FWHM=2,
-  TR=NULL, hpf=.01,
+  nuisance=NULL,
+  scrub=NULL,
+  drop_first=0,
+  hpf=0, TR=NULL,
   GSR=FALSE,
   Q2=0, Q2_max=NULL,
   brainstructures="all",
   keep_S=FALSE,keep_FC=FALSE,
-  FC=FALSE,
+  FC=TRUE,
   varTol=1e-6, maskTol=.1, missingTol=.1,
   usePar=FALSE, wb_path=NULL,
   verbose=TRUE) {
@@ -1303,7 +1349,8 @@ estimate_prior.gifti <- function(
     template=template, inds=inds,
     scale=scale, scale_sm_surfL=scale_sm_surfL, scale_sm_surfR=scale_sm_surfR,
     scale_sm_FWHM=scale_sm_FWHM,
-    TR=TR, hpf=hpf,
+    nuisance=nuisance, scrub=scrub, drop_first=drop_first,
+    hpf=hpf, TR=TR,
     GSR=GSR,
     Q2=Q2, Q2_max=Q2_max,
     brainstructures=brainstructures,
@@ -1321,12 +1368,15 @@ estimate_prior.nifti <- function(
   BOLD, BOLD2=NULL,
   template, inds=NULL,
   scale=c("local", "global", "none"),
-  TR=NULL, hpf=.01,
+  nuisance=NULL,
+  scrub=NULL,
+  drop_first=0,
+  hpf=0, TR=NULL,
   GSR=FALSE,
   Q2=0, Q2_max=NULL,
   mask=NULL,
   keep_S=FALSE,keep_FC=FALSE,
-  FC=FALSE,
+  FC=TRUE,
   varTol=1e-6, maskTol=.1, missingTol=.1,
   usePar=FALSE, wb_path=NULL,
   verbose=TRUE) {
@@ -1335,7 +1385,8 @@ estimate_prior.nifti <- function(
     BOLD=BOLD, BOLD2=BOLD2,
     template=template, inds=inds,
     scale=scale,
-    TR=TR, hpf=hpf,
+    nuisance=nuisance, scrub=scrub, drop_first=drop_first,
+    hpf=hpf, TR=TR,
     GSR=GSR,
     Q2=Q2, Q2_max=Q2_max,
     mask=mask,

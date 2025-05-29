@@ -17,10 +17,11 @@ estimate_prior(
   scale_sm_surfL = NULL,
   scale_sm_surfR = NULL,
   scale_sm_FWHM = 2,
+  nuisance = NULL,
   scrub = NULL,
   drop_first = 0,
+  hpf = 0,
   TR = NULL,
-  hpf = 0.01,
   GSR = FALSE,
   Q2 = 0,
   Q2_max = NULL,
@@ -49,8 +50,11 @@ estimate_prior.cifti(
   scale_sm_surfL = NULL,
   scale_sm_surfR = NULL,
   scale_sm_FWHM = 2,
+  nuisance = NULL,
+  scrub = NULL,
+  drop_first = 0,
+  hpf = 0,
   TR = NULL,
-  hpf = 0.01,
   GSR = FALSE,
   Q2 = 0,
   Q2_max = NULL,
@@ -58,7 +62,7 @@ estimate_prior.cifti(
   resamp_res = resamp_res,
   keep_S = FALSE,
   keep_FC = FALSE,
-  FC = FALSE,
+  FC = TRUE,
   varTol = 1e-06,
   maskTol = 0.1,
   missingTol = 0.1,
@@ -76,15 +80,18 @@ estimate_prior.gifti(
   scale_sm_surfL = NULL,
   scale_sm_surfR = NULL,
   scale_sm_FWHM = 2,
+  nuisance = NULL,
+  scrub = NULL,
+  drop_first = 0,
+  hpf = 0,
   TR = NULL,
-  hpf = 0.01,
   GSR = FALSE,
   Q2 = 0,
   Q2_max = NULL,
   brainstructures = "all",
   keep_S = FALSE,
   keep_FC = FALSE,
-  FC = FALSE,
+  FC = TRUE,
   varTol = 1e-06,
   maskTol = 0.1,
   missingTol = 0.1,
@@ -99,15 +106,18 @@ estimate_prior.nifti(
   template,
   inds = NULL,
   scale = c("local", "global", "none"),
+  nuisance = NULL,
+  scrub = NULL,
+  drop_first = 0,
+  hpf = 0,
   TR = NULL,
-  hpf = 0.01,
   GSR = FALSE,
   Q2 = 0,
   Q2_max = NULL,
   mask = NULL,
   keep_S = FALSE,
   keep_FC = FALSE,
-  FC = FALSE,
+  FC = TRUE,
   varTol = 1e-06,
   maskTol = 0.1,
   missingTol = 0.1,
@@ -181,35 +191,52 @@ To create a \code{"surf"} object from data, see
 \code{\link[ciftiTools]{make_surf}}. The surfaces must be in the same
 resolution as the \code{BOLD} data.}
 
-\item{scrub}{(Optional) Numeric vectors of integers indicating the indices
+\item{nuisance}{(Optional) Nuisance matrices to regress from the BOLD data.
+Should be a list of matrices, with time along the rows and nuisance signals
+along the columns, where each entry corresponds to a \code{BOLD} session;
+or, if \code{BOLD2} is provided, should be a length-2 list of such lists
+with the first sublist corresponding to \code{BOLD} and the second sublist
+corresponding to \code{BOLD2}. If \code{NULL}, do not remove any nuisance
+signals.
+
+Nuisance regression is performed in a simultaneous regression with any spike
+regressors from \code{scrub} and DCT bases from \code{hpf}.
+
+Note that the nuisance matrices should be provided with timepoints matching
+the original \code{BOLD} and \code{BOLD2} irregardless of \code{drop_first}.
+Nuisance matrices will be truncated automatically if \code{drop_first>0}.}
+
+\item{scrub}{(Optional) Numeric vectors of integers giving the indices
 of volumes to scrub from the BOLD data. (List the volumes to remove, not the
 ones to keep.) Should be a list of such vectors, where each entry
 corresponds to a \code{BOLD} session; or, if \code{BOLD2} is provided,
-should be a list of such lists with the first sublist corresponding to
-\code{BOLD} and the second sublist corresponding to \code{BOLD2}.
-Scrubbing is performed within nuisance regression by adding a spike
-regressor to the nuisance design matrix for each volume to scrub. If
+should be a length-2 list of such lists with the first sublist corresponding
+to \code{BOLD} and the second sublist corresponding to \code{BOLD2}. If
 \code{NULL} (default), do not scrub.
 
+Scrubbing is performed within a nuisance regression by adding a spike
+regressor to the nuisance design matrix for each volume to scrub.
+
 Note that indices are counted beginning with the first index in the
-\code{BOLD} session irregardless of \code{drop_first}.}
+\code{BOLD} session irregardless of \code{drop_first}. The indices will be
+adjusted automatically if \code{drop_first>0}.}
 
 \item{drop_first}{(Optional) Number of volumes to drop from the start of each
 BOLD session. Default: \code{0}.}
 
-\item{TR}{The temporal resolution of the data, i.e. the time between volumes,
-in seconds. \code{TR} is required for detrending with \code{hpf}.}
-
 \item{hpf}{The frequency at which to apply a highpass filter to the data
-during pre-processing, in Hertz. Default: \code{0.01} Hertz. Set to \code{0}
-to disable the highpass filter.
-
+during pre-processing, in Hertz. Default: \code{0} Hz (disabled). If the
+data has not already been highpass filtered, a recommended filter value is
+\code{.01} Hz.
 The highpass filter serves to detrend the data, since low-frequency
 variance is associated with noise. Highpass filtering is accomplished by
 nuisance regression of discrete cosine transform (DCT) bases.
 
 Note the \code{TR} argument is required for highpass filtering. If
 \code{TR} is not provided, \code{hpf} will be ignored.}
+
+\item{TR}{The temporal resolution of the data, i.e. the time between volumes,
+in seconds. \code{TR} is required for detrending with \code{hpf}.}
 
 \item{GSR}{Center BOLD across columns (each image)? This
 is equivalent to performing global signal regression. Default:

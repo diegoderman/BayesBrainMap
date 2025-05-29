@@ -10,10 +10,10 @@ NULL
 #' hpf
 #' 
 #' @param hpf The frequency at which to apply a highpass filter to the data
-#'  during pre-processing, in Hertz. Default: \code{0.01} Hertz. Set to \code{0}
-#'  to disable the highpass filter.
-#' 
-#' 
+#'  during pre-processing, in Hertz. Default: \code{0} Hz (disabled). If the 
+#'  data has not already been highpass filtered, a recommended filter value is
+#'  \code{.01} Hz.
+
 #'  The highpass filter serves to detrend the data, since low-frequency 
 #'  variance is associated with noise. Highpass filtering is accomplished by 
 #'  nuisance regression of discrete cosine transform (DCT) bases. 

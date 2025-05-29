@@ -85,7 +85,7 @@ close3d()
 
 pr_cii2 <- estimate_prior(
   cii_fnames[seq(3)], template = template_fname["cii"], TR=.72, FC=TRUE,
-  brainstructures=c("left", "right")
+  brainstructures=c("left", "right"), FC_nPivots=10, FC_nSamp=1000
 )
 bMap_cii2 <- BrainMap(
   cii_fnames[4], pr_cii2, brainstructures="left", maxiter=5, TR="prior", resamp_res=2000

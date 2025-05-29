@@ -58,7 +58,7 @@
 #'  regressed from the data, but a nuisance regression will still be used if
 #'  warranted by \code{scrub} or \code{hpf}.
 #'
-#' @param scrub (Optional) A numeric vector of integers indicating the indices
+#' @param scrub (Optional) A numeric vector of integers giving the indices
 #'  of volumes to scrub from the BOLD data. (List the volumes to remove, not the
 #'  ones to keep.) If multiple \code{BOLD} sessions are provided, this
 #'  argument can be a list to remove different volumes for different sessions.
@@ -205,12 +205,12 @@ BrainMap <- function(
   tvar_method=c("non-negative", "unbiased"),
   #tinds=NULL,
   scale=c("prior", "global", "local", "none"),
-  scale_sm_surfL=NULL,
+  scale_sm_surfL=NULL, 
   scale_sm_surfR=NULL,
   scale_sm_FWHM="prior",
   nuisance=NULL,
   scrub=NULL, drop_first=0,
-  TR=NULL, hpf="prior",
+  hpf="prior", TR=NULL,
   GSR="prior",
   Q2="prior",
   Q2_max="prior",
@@ -223,8 +223,8 @@ BrainMap <- function(
   rm_mwall=TRUE,
   reduce_dim=FALSE,
   method_FC=c("VB1", "VB2", "none"),
-  maxiter=100,
-  miniter=3,
+  maxiter=100, 
+  miniter=3, 
   epsilon=0.001,
   #eps_inter=NULL,
   kappa_init=0.2,
@@ -918,7 +918,7 @@ BrainMap <- function(
     }
     # Drop scrubbed volumes, if applicable.
     if (!is.null(scrub_nn)) {
-      BOLD[[nn]] <- BOLD[[nn]][,-scrub_nn]
+      BOLD[[nn]] <- BOLD[[nn]][,-scrub_nn,drop=FALSE]
       dBOLDs <- lapply(BOLD, dim)
       nT <- vapply(dBOLDs, function(x){x[ldB]}, 0)
       nTmin <- min(nT)
@@ -1184,7 +1184,7 @@ BrainMap <- function(
   # Params
   bMap_params <- list(
     GSR=GSR,
-    scale=scale, TR=TR, hpf=hpf,
+    scale=scale, hpf=hpf, TR=TR,
     Q2=Q2, Q2_max=Q2_max, Q2_est=Q2_est,
     covariate_names=covariate_names,
     brainstructures=brainstructures,
