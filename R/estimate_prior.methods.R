@@ -9,7 +9,7 @@
 #'  prior estimation, etc.
 #' @method summary prior.cifti
 summary.prior.cifti <- function(object, ...) {
-  tmean <- struct_prior(object$prior$mean, "CIFTI", object$mask_input, 
+  tmean <- struct_prior(object$prior$mean, "CIFTI", object$mask_input,
     object$params, object$dat_struct, object$template_parc_table)
   tparams <- lapply(
     object$params,
@@ -313,18 +313,18 @@ print.prior.matrix <- function(x, ...) {
 #' Plot prior
 #'
 #' @param x The prior from \code{estimate_prior.cifti}
-#' @param stat Which prior statistic to plot: the \code{"mean"} (default), 
+#' @param stat Which prior statistic to plot: the \code{"mean"} (default),
 #'  \code{"sd"} for the square root of the variance template, or \code{"var"}
-#'  for the variance template. 
+#'  for the variance template.
 #' @param maps Show the prior maps on the brain? Default: \code{TRUE}.
-#' @param FC Empirical (\code{"emp"}) (default), Inverse-Wishart 
+#' @param FC Empirical (\code{"emp"}) (default), Inverse-Wishart
 #'  (\code{"IW"}), Cholesky (\code{"Chol"}), or \code{"none"}.
 #' @param var_method \code{"non-negative"} (default) or \code{"unbiased"}
 #' @param ... Additional arguments to \code{view_xifti}
 #' @return The plot
 #' @export
 #' @method plot prior.cifti
-plot.prior.cifti <- function(x, 
+plot.prior.cifti <- function(x,
   stat=c("mean", "sd", "var"),
   maps=TRUE,
   FC=c("emp", "IW", "Chol", "none"),
@@ -335,6 +335,9 @@ plot.prior.cifti <- function(x,
     stop("Package \"ciftiTools\" needed to read NIFTI data. Please install it.", call. = FALSE)
   }
 
+  stat <- match.arg(stat, c("mean", "sd", "var"))
+  if (isFALSE(FC)) { FC <- "none" }
+  FC <- match.arg(FC, c("emp", "IW", "Chol", "none"))
   var_method <- match.arg(var_method, c("non-negative", "unbiased"))
 
   # Check `...`
@@ -342,9 +345,6 @@ plot.prior.cifti <- function(x,
   has_title <- "title" %in% names(args)
   has_idx <- "idx" %in% names(args)
   has_fname <- "fname" %in% names(args)
-
-  # Check `stat`
-  stat <- match.arg(stat, c("mean", "sd", "var"))
 
   # Print message saying what's happening.
   msg1 <- ifelse(has_idx,
@@ -359,8 +359,16 @@ plot.prior.cifti <- function(x,
   cat(msg1, msg2, "\n")
 
   # Plot
-  out <- list(mean=NULL, var=NULL)
-  for (ss in stat) {
+  out <- list()
+
+  for (plt in c("map", "FC")) {
+    if (plt == "map" && !maps) { next }
+    if (plt == "FC" && is.null(x$prior$FC)) { next }
+    if (plt == "FC" && FC=="none") { next }
+
+    ss <- stat
+    ss2 <- ss
+    if (plt == "FC") { ss2 <- paste0(ss2, "_FC") }
     ssname <- if (ss == "mean") {
       ss
     } else if (var_method=="non-negative") {
@@ -368,27 +376,42 @@ plot.prior.cifti <- function(x,
     } else {
       "varUB"
     }
-    if (ss=="var" && var_method=="unbiased") { x$prior[[ssname]][] <- pmax(0, x$prior[[ssname]]) }
-    if (ss=="sd") {
-      x$prior[[ssname]] <- sqrt(x$prior[[ssname]])
+
+    dat <- if (plt == "map") {
+      x$prior[[ssname]]
+    } else if (FC == "emp") {
+      x$prior$FC[[switch(
+        ssname, mean="mean_empirical", varNN="var_empirical", varUB="var_empirical")]]
+    } else if (FC == "IW") {
+      stop("Not implemented.")
+    } else if (FC == "Chol") {
+      x$prior$FC_Chol[[switch(
+        ssname, mean="FC_samp_mean", varNN="FC_samp_var", varUB="FC_samp_var")]]
     }
-    tss <- struct_prior(x$prior[[ssname]], "CIFTI", x$mask_input, x$params, x$dat_struct, x$template_parc_table)
+
+    if (ss=="var" && var_method=="unbiased") { dat[] <- pmax(0, dat) }
     if (ss=="sd") {
+      dat <- sqrt(dat)
       ssname <- paste0("sqrt ", ssname)
+    }
+
+    if (plt == "map") {
+      tss <- struct_prior(
+        dat, "CIFTI", x$mask_input, x$params, x$dat_struct, x$template_parc_table)
     }
 
     args_ss <- args
     # Handle title and idx
     ### No title: use the component names if available, and the indices if not.
     if (!has_title && !has_idx) {
-      args_ss$title <- if (!is.null(tss$meta$cifti$names)) {
-        tss$meta$cifti$names[1]
+      args_ss$title <- if (!is.null(x$dat_struct$meta$cifti$names)) {
+        x$dat_struct$meta$cifti$names[1]
       } else {
         "First component"
       }
     } else if (!has_title) {
-      args_ss$title <- if (!is.null(tss$meta$cifti$names)) {
-        tss$meta$cifti$names[args$idx]
+      args_ss$title <- if (!is.null(x$dat_struct$meta$cifti$names)) {
+        x$dat_struct$meta$cifti$names[args$idx]
       } else {
         paste("Component", args$idx)
       }
@@ -407,9 +430,15 @@ plot.prior.cifti <- function(x,
       args_ss$fname <- gsub(paste0(".", fext), "", args_ss$fname, fixed=TRUE)
       args_ss$fname <- paste0(args_ss$fname, "_", ss, ".", fext)
     }
-    out[[ss]] <- do.call(
-      ciftiTools::view_xifti, c(list(tss), args_ss)
-    )
+
+    if (plt == "map") {
+      out[[paste0(ss, "_map")]] <- do.call(
+        ciftiTools::view_xifti, c(list(tss), args_ss)
+      )
+    } else if (plt == "FC") {
+      out[[paste0(ss, "_FC")]]  <- fMRItools::plot_FC_gg(dat, title=args_ss$title, diagVal=NULL)
+      print(out[[paste0(ss, "_FC")]])
+    }
   }
 
   invisible(out)
