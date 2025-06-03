@@ -953,33 +953,36 @@ BrainMap <- function(
   )
 
   ## Estimate and subtract nuisance ICs ----------------------------------------
-  if (verbose && (is.null(Q2) || Q2!=0)) { cat("Removing nuisance ICs.\n") }
+  if (is.null(Q2) || Q2!=0) {
+    if (verbose) { cat("Removing nuisance ICs.\n") }
 
-  Q2_est <- vector("numeric", nN)
-  for (nn in seq(nN)) {
-    x <- rm_nuisIC(
-      BOLD[[nn]], prior_mean=prior$mean, Q2=Q2, Q2_max=Q2_max,
-      verbose=verbose, return_Q2=TRUE
+    Q2_est <- vector("numeric", nN)
+    for (nn in seq(nN)) {
+      x <- rm_nuisIC(
+        BOLD[[nn]], prior_mean=prior$mean, Q2=Q2, Q2_max=Q2_max,
+        verbose=verbose, return_Q2=TRUE
+      )
+      BOLD[[nn]] <- x$BOLD
+      Q2_est[nn] <- x$Q2
+    }
+    rm(x)
+
+    ## Center and scale `BOLD` again to ensure mean zero and correct scaling ---
+    if (verbose) {
+      cat("Normalizing BOLD again: centering location timecourses")
+      if (scale != "none") { cat(",", scale, "scaling") }
+      cat(".\n")
+    }
+
+    BOLD <- lapply(BOLD, norm_BOLD,
+      center_rows=TRUE, center_cols=FALSE,
+      scale=scale, scale_sm_xifti=xii1, scale_sm_FWHM=scale_sm_FWHM,
+      scale_sm_xifti_mask=mask2and3,
+      hpf=0
     )
-    BOLD[[nn]] <- x$BOLD
-    Q2_est[nn] <- x$Q2
+  } else {
+    Q2_est <- rep(0, nN)
   }
-  rm(x)
-
-  ## Center and scale `BOLD` again to ensure mean zero and correct scaling -----
-  if (verbose) {
-    cat("Normalizing BOLD again: centering location timecourses")
-    if (scale != "none") { cat(",", scale, "scaling") }
-    cat(".\n")
-  }
-
-
-  BOLD <- lapply(BOLD, norm_BOLD,
-    center_rows=TRUE, center_cols=FALSE,
-    scale=scale, scale_sm_xifti=xii1, scale_sm_FWHM=scale_sm_FWHM,
-    scale_sm_xifti_mask=mask2and3,
-    hpf=0
-  )
 
   ## Concatenate the data. -----------------------------------------------------
   if (verbose && length(nT) > 1) { cat("Concatenating sessions.\n") }
@@ -1196,7 +1199,8 @@ BrainMap <- function(
     maxiter=maxiter,
     epsilon=epsilon,
     #eps_inter=eps_inter,
-    kappa_init=kappa_init
+    kappa_init=kappa_init,
+    FC=do_FC
   )
 
   # Format output.

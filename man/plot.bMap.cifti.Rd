@@ -2,14 +2,19 @@
 % Please edit documentation in R/BrainMap.methods.R
 \name{plot.bMap.cifti}
 \alias{plot.bMap.cifti}
-\title{Plot prior}
+\title{Plot BrainMap estiamte}
 \usage{
-\method{plot}{bMap.cifti}(x, stat = c("mean", "se", "both"), ...)
+\method{plot}{bMap.cifti}(x, stat = c("mean", "se"), maps = TRUE, FC = TRUE, ...)
 }
 \arguments{
 \item{x}{The result of \code{BrainMap} with CIFTI data}
 
-\item{stat}{\code{"mean"} (default), \code{"se"}, or \code{"both"}}
+\item{stat}{\code{"mean"} (default) or \code{"se"}.}
+
+\item{maps}{Show the BrianMap estimates on the brain? Default: \code{TRUE}.}
+
+\item{FC}{Show the FC estimates? Default: \code{TRUE}. Note that only the
+mean estimate is available for FC, not the SE.}
 
 \item{...}{Additional arguments to \code{view_xifti}}
 }
@@ -17,5 +22,5 @@
 The plot
 }
 \description{
-Plot prior
+Plot BrainMap estiamte
 }

@@ -98,6 +98,7 @@ print.summary.bMap.cifti <- function(x, ...) {
   cat("Variance method: ", x$tvar_method, "\n")
   cat("Q2 and Q2_max:   ", paste0(x$Q2, ", ", x$Q2_max), "\n")
   cat("-------------------------------------\n")
+  cat("FC model:        ", x$FC, "\n")
   cat("Spatial model:   ", x$spatial_model, "\n")
   cat("Dims reduced:    ", x$reduce_dim, "\n")
   cat("Maximum iters:   ", x$maxiter, "\n")
@@ -129,6 +130,7 @@ print.summary.bMap.nifti <- function(x, ...) {
   cat("Variance method: ", x$tvar_method, "\n")
   cat("Q2 and Q2_max:   ", paste0(x$Q2, ", ", x$Q2_max), "\n")
   cat("-------------------------------------\n")
+  cat("FC model:        ", x$FC, "\n")
   cat("Spatial model:   ", x$spatial_model, "\n")
   cat("Dims reduced:    ", x$reduce_dim, "\n")
   cat("Maximum iters:   ", x$maxiter, "\n")
@@ -158,6 +160,7 @@ print.summary.bMap.matrix <- function(x, ...) {
   cat("Variance method: ", x$tvar_method, "\n")
   cat("Q2 and Q2_max:   ", paste0(x$Q2, ", ", x$Q2_max), "\n")
   cat("-------------------------------------\n")
+  cat("FC model:        ", x$FC, "\n")
   cat("Spatial model:   ", x$spatial_model, "\n")
   cat("Dims reduced:    ", x$reduce_dim, "\n")
   cat("Maximum iters:   ", x$maxiter, "\n")
@@ -197,20 +200,37 @@ print.bMap.matrix <- function(x, ...) {
   print.summary.bMap.matrix(summary(x))
 }
 
-#' Plot prior
+#' Plot BrainMap estiamte
 #'
 #' @param x The result of \code{BrainMap} with CIFTI data
-#' @param stat \code{"mean"} (default), \code{"se"}, or \code{"both"}
+#' @param stat \code{"mean"} (default) or \code{"se"}.
+#' @param maps Show the BrianMap estimates on the brain? Default: \code{TRUE}.
+#' @param FC Show the FC estimates? Default: \code{TRUE}. Note that only the
+#'  mean estimate is available for FC, not the SE.
 #' @param ... Additional arguments to \code{view_xifti}
 #' @return The plot
 #' @export
 #' @method plot bMap.cifti
-plot.bMap.cifti <- function(x, stat=c("mean", "se", "both"), ...) {
+plot.bMap.cifti <- function(x,
+  stat=c("mean", "se"),
+  maps=TRUE,
+  FC=TRUE,
+  ...) {
   stopifnot(inherits(x, "bMap.cifti"))
 
   if (!requireNamespace("ciftiTools", quietly = TRUE)) {
     stop("Package \"ciftiTools\" needed to work with CIFTI data. Please install it.", call. = FALSE)
   }
+
+  stat <- match.arg(stat, c("mean", "se"))
+  stopifnot(isTRUE(maps) || isFALSE(maps))
+  stopifnot(isTRUE(FC) || isFALSE(FC))
+  if (!maps && !FC) { return(invisible(NULL)) }
+  if (stat=="se" && !maps) {
+    message("No FC SE, and maps==FALSE, so nothing to plot.")
+    return(invisible(NULL))
+  }
+
 
   # Check `...`
   args <- list(...)
@@ -218,52 +238,43 @@ plot.bMap.cifti <- function(x, stat=c("mean", "se", "both"), ...) {
   has_idx <- "idx" %in% names(args)
   has_fname <- "fname" %in% names(args)
 
-  # Check `stat`
-  stat <- tolower(stat)
-  if (has_idx && length(args$idx)>1 && !("fname" %in% names(args))) {
-    if (identical(stat, c("mean", "se", "both"))) {
-      stat <- "mean"
-    } else {
-      stat <- match.arg(stat, c("mean", "se", "both"))
-    }
-    if (stat == "both") {
-      if (!("fname" %in% names(args))) {
-        warning(
-          "For multiple `idx`, use one call to plot() ",
-          "for the mean prior, ",
-          "and a separate one for the seiance prior. ",
-          "Showing the mean prior now."
-        )
-        stat <- "mean"
-      }
-    }
-  }
-  stat <- match.arg(stat, c("mean", "se", "both"))
-
   # Print message saying what's happening.
   msg1 <- ifelse(has_idx,
     "Plotting the",
     "Plotting the first component's"
   )
   msg2 <- switch(stat,
-    both="estimate and standard error.",
     mean="estimate.",
     se="standard error."
   )
   cat(msg1, msg2, "\n")
 
   # Plot
-  out <- list(mean=NULL, se=NULL)
-  if (stat == "both") { stat <- c("mean", "se") }
-  for (ss in stat) {
+  out <- list()
+
+  for (plt in c("map" , "FC")) {
+    if (plt == "map" && !maps) { next }
+    if (plt == "FC" && is.null(x$FC)) { next }
+    if (plt == "FC" && !FC) { next }
+    if (plt == "FC" && stat=="se") { next }
+
+    ss <- stat
     args_ss <- args
     tsfx_ss <- c(mean="", se=" (se)")[ss]
     # Handle title and idx
-    if (!has_title && !has_idx) {
-      c1name <- if (!is.null(x$subjNet_mean$meta$cifti$names)) {
-        x$subjNet_mean$meta$cifti$names[1]
+    if (!has_title) {
+      if (has_idx) {
+        c1name <- if (!is.null(x$subjNet_mean$meta$cifti$names)) {
+          x$subjNet_mean$meta$cifti$names[args$idx]
+        } else {
+          paste("Component", args$idx)
+        }
       } else {
-        "First component"
+        c1name <- if (!is.null(x$subjNet_mean$meta$cifti$names)) {
+          x$subjNet_mean$meta$cifti$names[1]
+        } else {
+          "First component"
+        }
       }
       args_ss$title <- paste0(c1name, tsfx_ss)
     } else if (!has_idx) {
@@ -281,9 +292,15 @@ plot.bMap.cifti <- function(x, stat=c("mean", "se", "both"), ...) {
       args_ss$fname <- gsub(paste0(".", fext), "", args_ss$fname, fixed=TRUE)
       args_ss$fname <- paste0(args_ss$fname, "_", ss, ".", fext)
     }
-    out[[ss]] <- do.call(
-      ciftiTools::view_xifti, c(list(x[[paste0("subjNet_", ss)]]), args_ss)
-    )
+
+    if (plt == "map") {
+      out[[paste0(ss, "_map")]] <- do.call(
+        ciftiTools::view_xifti, c(list(x[[paste0("subjNet_", ss)]]), args_ss)
+      )
+    } else if (plt == "FC") {
+      out[[paste0(ss, "_FC")]]  <- fMRItools::plot_FC_gg(x$FC$mean, title="FC mean", diagVal=NULL)
+      print(out[[paste0(ss, "_FC")]])
+    }
   }
 
   invisible(out)
@@ -408,7 +425,7 @@ plot.bMap.nifti <- function(x, stat=c("mean", "se"),
 }
 
 #' Plot prior
-#' 
+#'
 #' This feature is not supported yet.
 #'
 #' @param x The result of \code{BrainMap} with NIFTI data

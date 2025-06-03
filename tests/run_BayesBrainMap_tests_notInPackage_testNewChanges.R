@@ -84,6 +84,10 @@ pr_ciiA <- estimate_prior(
   FC_nPivots=10, FC_nSamp=1000
 )
 
+bMap_cii <- BrainMap(
+  cii_fnames[4], pr_ciiA, brainstructures="left", maxiter=5, TR="prior", resamp_res=2000
+)
+
 bold <- lapply(cii_fnames[seq(3)], read_cifti, brainstructures="left")
 bold <- lapply(bold, select_xifti, seq(235, 1200))
 pr_ciiB <- estimate_prior(

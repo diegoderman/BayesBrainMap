@@ -319,7 +319,9 @@ print.prior.matrix <- function(x, ...) {
 #' @param maps Show the prior maps on the brain? Default: \code{TRUE}.
 #' @param FC Empirical (\code{"emp"}) (default), Inverse-Wishart
 #'  (\code{"IW"}), Cholesky (\code{"Chol"}), or \code{"none"}.
-#' @param var_method \code{"non-negative"} (default) or \code{"unbiased"}
+#' @param var_method \code{"non-negative"} (default) or \code{"unbiased"}, for
+#'  the variance estimate of the maps. Note that FC variance estimates are
+#'  always non-negative.
 #' @param ... Additional arguments to \code{view_xifti}
 #' @return The plot
 #' @export
@@ -336,6 +338,7 @@ plot.prior.cifti <- function(x,
   }
 
   stat <- match.arg(stat, c("mean", "sd", "var"))
+  stopifnot(isTRUE(maps) || isFALSE(maps))
   if (isFALSE(FC)) { FC <- "none" }
   FC <- match.arg(FC, c("emp", "IW", "Chol", "none"))
   var_method <- match.arg(var_method, c("non-negative", "unbiased"))
@@ -371,6 +374,8 @@ plot.prior.cifti <- function(x,
     if (plt == "FC") { ss2 <- paste0(ss2, "_FC") }
     ssname <- if (ss == "mean") {
       ss
+    } else if (plt == "FC") {
+      "varNN"
     } else if (var_method=="non-negative") {
       "varNN"
     } else {
@@ -381,12 +386,12 @@ plot.prior.cifti <- function(x,
       x$prior[[ssname]]
     } else if (FC == "emp") {
       x$prior$FC[[switch(
-        ssname, mean="mean_empirical", varNN="var_empirical", varUB="var_empirical")]]
+        ssname, mean="mean_empirical", varNN="var_empirical", varUB=stop())]]
     } else if (FC == "IW") {
       stop("Not implemented.")
     } else if (FC == "Chol") {
       x$prior$FC_Chol[[switch(
-        ssname, mean="FC_samp_mean", varNN="FC_samp_var", varUB="FC_samp_var")]]
+        ssname, mean="FC_samp_mean", varNN="FC_samp_var", varUB=stop())]]
     }
 
     if (ss=="var" && var_method=="unbiased") { dat[] <- pmax(0, dat) }
@@ -436,7 +441,7 @@ plot.prior.cifti <- function(x,
         ciftiTools::view_xifti, c(list(tss), args_ss)
       )
     } else if (plt == "FC") {
-      out[[paste0(ss, "_FC")]]  <- fMRItools::plot_FC_gg(dat, title=args_ss$title, diagVal=NULL)
+      out[[paste0(ss, "_FC")]]  <- fMRItools::plot_FC_gg(dat, title=paste("FC", ssname), diagVal=NULL)
       print(out[[paste0(ss, "_FC")]])
     }
   }

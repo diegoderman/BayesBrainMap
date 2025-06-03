@@ -25,7 +25,9 @@ for the variance template.}
 \item{FC}{Empirical (\code{"emp"}) (default), Inverse-Wishart
 (\code{"IW"}), Cholesky (\code{"Chol"}), or \code{"none"}.}
 
-\item{var_method}{\code{"non-negative"} (default) or \code{"unbiased"}}
+\item{var_method}{\code{"non-negative"} (default) or \code{"unbiased"}, for
+the variance estimate of the maps. Note that FC variance estimates are
+always non-negative.}
 
 \item{...}{Additional arguments to \code{view_xifti}}
 }
