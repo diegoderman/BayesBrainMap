@@ -157,6 +157,10 @@ pr_ciiB <- estimate_prior(
   FC_nPivots=10, FC_nSamp=1000
 )
 
+stopifnot(
+  max(as.matrix(pr_ciiA$prior$mean) - as.matrix(pr_ciiB$prior$mean)) < 1e-8
+)
+
 bMap_cii <- BrainMap(
   cii_fnames[4], pr_ciiA, maxiter=5, TR="prior", resamp_res=2000
 )
