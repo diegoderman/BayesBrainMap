@@ -1,6 +1,6 @@
 #' Engagements of (spatial) Bayesian brain mapping
 #'
-#' Identify areas of engagement in each network from the result of (spatial) 
+#' Identify areas of engagement in each network from the result of (spatial)
 #'  Bayesian brain mapping.
 #'
 #' @param bMap Fitted (spatial) Bayesian brain map from \code{\link{BrainMap}}.
@@ -15,9 +15,9 @@
 #' @param type Type of region: \code{">"} (default), \code{"abs >"}, \code{"<"},
 #'  or \code{"!="}. \code{"abs >"} tests for magnitude by taking the absolute
 #'  value and then testing if they are greater than... .
-#' @param method_p If the input is a \code{"bMap.[format]"} model object, the 
+#' @param method_p If the input is a \code{"bMap.[format]"} model object, the
 #'  type of multiple comparisons correction to use for p-values, or \code{NULL}
-#'  for no correction. See \code{help(p.adjust)}. Default: \code{"BH"} 
+#'  for no correction. See \code{help(p.adjust)}. Default: \code{"BH"}
 #'  (Benjamini & Hochberg, i.e. the false discovery rate). Note that multiple
 #'  comparisons will account for data locations, but not networks.
 #' @param verbose If \code{TRUE}, display progress of algorithm. Default:
@@ -29,7 +29,7 @@
 #'  \code{FALSE}.
 #'
 #' @return A list containing engagement maps for each network, the joint and
-#'  marginal PPMs for each network, and the parameters used for computing 
+#'  marginal PPMs for each network, and the parameters used for computing
 #'  engagement. If the input represented CIFTI- or NIFTI-format data, then the
 #'  engagements maps will be formatted accordingly.
 #'
@@ -113,6 +113,7 @@ engagements <- function(
 
   # Vectorize data.
   if (FORMAT == "CIFTI") {
+    netNames <- bMap$subjNet_mean$meta$cifti$names
     xii1 <- ciftiTools::newdata_xifti(ciftiTools::select_xifti(bMap$subjNet_mean,1), 0)
     bMap$subjNet_mean <- as.matrix(bMap$subjNet_mean)
     bMap$subjNet_se <- as.matrix(bMap$subjNet_se)
@@ -260,6 +261,12 @@ engagements <- function(
     # }
   }
 
+  # `which.nets`
+  engaged <- engaged[,which.nets,drop=FALSE]
+  for (uu in seq(length(nU))) {
+    out[[uu]] <- lapply(out[[uu]], function(q){q[,which.nets,drop=FALSE]})
+  }
+
   # Un-vectorize data.
   if (FORMAT == "CIFTI") {
     engaged <- ciftiTools::newdata_xifti(xii1, engaged)
@@ -272,13 +279,15 @@ engagements <- function(
       colors=c("#888888", "white", engaged_colors),
       add_white=FALSE
     )
+    engaged$meta$cifti$names <- netNames[which.nets]
   }
 
   result <- c(
     list(engaged=engaged),
     out,
     list(params=list(
-      alpha=alpha, method_p=method_p, type=type, u=u, z=z, deviation=deviation
+      alpha=alpha, method_p=method_p, type=type, u=u, z=z,
+      which.nets=which.nets, deviation=deviation
     ))
   )
 
