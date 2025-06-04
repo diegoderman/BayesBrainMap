@@ -244,8 +244,8 @@ plot.bMap.cifti <- function(x,
     "Plotting the first component's"
   )
   msg2 <- switch(stat,
-    mean="estimate.",
-    se="standard error."
+    mean=if (FC) { "mean estimate of the maps and FC." } else { "mean estimate of the maps." },
+    se="standard error of the maps."
   )
   cat(msg1, msg2, "\n")
 
@@ -297,6 +297,7 @@ plot.bMap.cifti <- function(x,
       out[[paste0(ss, "_map")]] <- do.call(
         ciftiTools::view_xifti, c(list(x[[paste0("subjNet_", ss)]]), args_ss)
       )
+      if (inherits(out[[paste0(ss, "_map")]], "htmlwidget")) { print(out[[paste0(ss, "_map")]]) }
     } else if (plt == "FC") {
       out[[paste0(ss, "_FC")]]  <- fMRItools::plot_FC_gg(x$FC$mean, title="FC mean", diagVal=NULL)
       print(out[[paste0(ss, "_FC")]])
