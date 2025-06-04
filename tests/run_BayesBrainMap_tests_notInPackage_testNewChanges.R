@@ -141,3 +141,22 @@ pr_ciiC <- estimate_prior(
   bold, template = template_fname["cii"], TR=.72, FC=FALSE,
   brainstructures="right", scale="global", GSR=TRUE
 )
+
+# w/ BOLD2 -----
+pr_ciiA <- estimate_prior(
+  cii_fnames[seq(3)], BOLD2=cii_fnames[c(4,5,6)],
+  template = template_fname["cii"], TR=.72, FC=TRUE,
+  brainstructures="right", hpf=.01, Q2=NULL,
+  FC_nPivots=10, FC_nSamp=1000
+)
+
+pr_ciiB <- estimate_prior(
+  cii_fnames[seq(4,6)], BOLD2=cii_fnames[seq(3)],
+  template = template_fname["cii"], TR=.72, FC=TRUE,
+  brainstructures="right", hpf=.01, Q2=NULL,
+  FC_nPivots=10, FC_nSamp=1000
+)
+
+bMap_cii <- BrainMap(
+  cii_fnames[4], pr_ciiA, maxiter=5, TR="prior", resamp_res=2000
+)
