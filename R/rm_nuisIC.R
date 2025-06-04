@@ -94,11 +94,11 @@ rm_nuisIC <- function(BOLD, DR=NULL, prior_mean=NULL, Q2=NULL, Q2_max=NULL,
   if (is.null(Q2)) {
     if(verbose) cat(paste0('Estimating number of nuisance components... '))
     Q2 <- suppressWarnings(pesel::pesel(BOLD2, npc.max=Q2_max, method='homogenous')$nPCs) #estimated number of nuisance ICs
-    if(verbose) cat(paste0(Q2,'\n'))
+    if(verbose) cat(Q2)
   }
 
-  # Not sure if this actually happens?
   if (Q2 == 0) {
+    if (verbose) { cat("\n") }
     if (return_Q2) {
       return(list(BOLD=BOLD, Q2=Q2))
     } else {
@@ -118,7 +118,7 @@ rm_nuisIC <- function(BOLD, DR=NULL, prior_mean=NULL, Q2=NULL, Q2_max=NULL,
   #   Y2 * Y2' = U * D^2 * U'
   #   V' = (1/D) * U' * Y2
   #   UDV' = U * U' * Y2
-  if (verbose) { cat('Estimating & subtracting nuisance components.') }
+  if (verbose) { cat('\n\tEstimating & subtracting nuisance components...') }
   BOLD2 <- BOLD - (BOLD2 %*% tcrossprod(svd(crossprod(BOLD2), nu=Q2, nv=0)$u))
 
   if (return_Q2) {
