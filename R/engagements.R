@@ -244,7 +244,7 @@ engagements <- function(
   }
 
   # Format result. -------------------------------------------------------------
-  engaged <- rowSums(abind(lapply(out, "[[", "engaged"), along=3), dims=2)
+  engaged <- rowSums(abind(lapply(out, "[[", "engaged"), along=3), dims=2, na.rm=TRUE)
   engaged[] <- as.numeric(engaged)
   dimnames(engaged) <- NULL
 
@@ -263,7 +263,7 @@ engagements <- function(
 
   # `which.nets`
   engaged <- engaged[,which.nets,drop=FALSE]
-  for (uu in seq(length(nU))) {
+  for (uu in seq(nU)) {
     out[[uu]] <- lapply(out[[uu]], function(q){q[,which.nets,drop=FALSE]})
   }
 
@@ -280,6 +280,7 @@ engagements <- function(
       add_white=FALSE
     )
     engaged$meta$cifti$names <- netNames[which.nets]
+    names(engaged$meta$cifti$labels) <- netNames[which.nets]
   }
 
   result <- c(
