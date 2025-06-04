@@ -312,7 +312,6 @@ dual_reg2 <- function(
 
   # Nuisance regression and scrubbing. -----------------------------------------
   add_to_nuis <- function(x, nuis) {
-    print(ncol(x))
     if (is.null(nuis)) { x } else { cbind(x, nuis) }
   }
 
