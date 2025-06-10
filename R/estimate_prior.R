@@ -1077,6 +1077,7 @@ estimate_prior <- function(
   # Estimate the mean and variance priors.
   # Also obtain the variance decomposition.
   x <- estimate_prior_from_DR(DR0, c(nL, nVm))
+  browser()
   prior <- lapply(x$prior, t)
   var_decomp <- lapply(x$var_decomp, t)
   rm(x)

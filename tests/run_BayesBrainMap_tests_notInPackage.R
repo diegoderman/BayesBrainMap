@@ -38,9 +38,16 @@ xii1 <- select_xifti(read_cifti(template_fname["cii"]), 1) * 0
 
 # Quick little check of the three main functions, w/ CIFTI ---------------------
 pr_cii <- estimate_prior(
-  cii_fnames[seq(3)], template = template_fname["cii"], TR=.72, FC=FALSE,
+  cii_fnames[seq(3)], template = template_fname["cii"], TR=.72, hpf=0, FC=FALSE,
   brainstructures=c("left", "right")
 )
+
+# Check same as:
+# tm_cii <- templateICAr::estimate_template(
+#   cii_fnames[seq(3)], GICA = template_fname["cii"], TR=.72, FC=FALSE,
+#   brainstructures=c("left", "right"), hpf=0
+# )
+
 # # w/ mask
 # pr2_cii <- estimate_prior(
 #   cii_fnames[seq(3)], template = template_fname["cii"], TR=.72, FC=FALSE, varTol=5000,

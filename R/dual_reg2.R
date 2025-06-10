@@ -400,8 +400,6 @@ dual_reg2 <- function(
     }
   }
 
-  # nmat <- add_to_nuis(as.matrix(rep(1, nT_pre)), nmat) # TEMP
-
   ## Perform nuisance regression, and drop scrubbed volumes, if applicable. ----
   if (!is.null(nmat)) {
     nmat <- add_to_nuis(1, nmat)
@@ -460,15 +458,18 @@ dual_reg2 <- function(
 
   # Get the first dual regression results. -------------------------------------
   if (verbose) { cat("\n\tDual regression... ") }
-  BOLD <- this_norm_BOLD(BOLD) # note that the halves get normalized again. [TO DO] fix/make efficient?
   # but this normalization step was added so that sigma_sq is correctly calculated.
   if (!retest) {
     part1 <- seq(round(nT/2))
     part2 <- setdiff(seq(nT), part1)
-    out$test <- dual_reg_yesNorm(BOLD[, part1, drop=FALSE])
-    out$retest <- dual_reg_yesNorm(BOLD[, part2, drop=FALSE])
+    BOLDh1 <- this_norm_BOLD(BOLD[, part1, drop=FALSE])
+    BOLDh2 <- this_norm_BOLD(BOLD[, part2, drop=FALSE])
+    out$test <- dual_reg_noNorm(BOLDh1)
+    #out$test2 <- dual_reg_yesNorm(BOLD[, part1, drop=FALSE]) # yes, is the same.
+    out$retest <- dual_reg_noNorm(BOLDh2)
   } else {
     # If retest, normalize `BOLD` and `BOLD2`, and then compute DR.
+    BOLD <- this_norm_BOLD(BOLD)
     BOLD2 <- this_norm_BOLD(BOLD2)
     # (No need to normalize again.)
     out$test <- dual_reg_noNorm(BOLD)
@@ -476,8 +477,8 @@ dual_reg2 <- function(
   }
 
   BOLDss <- list(
-    test = if (!retest) { BOLD[, part1, drop=FALSE] } else { BOLD },
-    retest = if (!retest) { BOLD[, part2, drop=FALSE] } else { BOLD2 }
+    test = if (!retest) { BOLDh1 } else { BOLD },
+    retest = if (!retest) { BOLDh2 } else { BOLD2 }
   )
   BOLDss$test_preclean <- BOLDss$test
   BOLDss$retest_preclean <- BOLDss$retest
@@ -501,7 +502,7 @@ dual_reg2 <- function(
   # If !retest, we prefer to estimate nuisance ICs across the full scan
   # and then halve it after.
   if (!retest) {
-    BOLD <- this_norm_BOLD(BOLD)
+    BOLD <- this_norm_BOLD(BOLD) # hasn't been done yet
     BOLD_DR <- dual_reg_noNorm(BOLD)
     BOLD <- rm_nuisIC(BOLD, DR=BOLD_DR, Q2=Q2, Q2_max=Q2_max, verbose=verbose)
     rm(BOLD_DR)
@@ -512,17 +513,9 @@ dual_reg2 <- function(
     BOLD2 <- rm_nuisIC(BOLD2, DR=out$retest, Q2=Q2, Q2_max=Q2_max, verbose=verbose)
   }
 
-  # Center and scale `BOLD` and `BOLD2` (again), but do not detrend again. -----
-  BOLD <- norm_BOLD(
-    BOLD, center_rows=TRUE, center_cols=GSR,
-    scale=scale, scale_sm_xifti=xii1, scale_sm_FWHM=scale_sm_FWHM,
-    TR=TR, hpf=0
-  )
-  BOLD2 <- norm_BOLD(
-    BOLD2, center_rows=TRUE, center_cols=GSR,
-    scale=scale, scale_sm_xifti=xii1, scale_sm_FWHM=scale_sm_FWHM,
-    TR=TR, hpf=0
-  )
+  # Center and scale `BOLD` and `BOLD2` (again). recall hpf was set to 0. -----
+  BOLD <- this_norm_BOLD(BOLD)
+  BOLD2 <- this_norm_BOLD(BOLD2)
 
   # Do DR again. ---------------------------------------------------------------
   if (verbose) { cat("\n\tDual regression again... ") }
