@@ -1135,11 +1135,21 @@ estimate_prior <- function(
         #perform Cholesky decomposition on each matrix in FC0 --> dim(FC0) = c(nM, nN, nL, nL)
         Chol_p <- apply(FC0, 1:2, function(x, pivot){ # dim = nChol x nM x nN
           xp <- x[pivot,pivot]
-          chol_xp <- chol(xp)
-          chol_xp[upper.tri(chol_xp, diag = TRUE)]
+          # NOHELIA
+          # chol will return an error when there are NAs in FCO or when there is any rank deficiency in one of the sessions
+          # if error, return NA instead
+          tryCatch({
+            chol_xp <- chol(xp)
+            chol_xp[upper.tri(chol_xp, diag = TRUE)]
+          }, error = function(e) {
+            rep(NA_real_, length(xp[upper.tri(xp, diag = TRUE)]))
+          })
         }, pivot = pivots[[pp]])
         #rbind across sessions to form a matrix
         Chol_mat_p <- rbind(t(Chol_p[,1,]), t(Chol_p[,2,])) # dim = nM*nN x nChol
+        ## NOHELIA
+        # remove all rows with NA before calling Chol_samp_fun
+        Chol_mat_p <- Chol_mat_p[complete.cases(Chol_mat_p), ]
 
         #take samples
         Chol_samp_pp <- Chol_samp_fun(Chol_mat_p, p=pivots[[pp]], M=FC_nSamp2,
