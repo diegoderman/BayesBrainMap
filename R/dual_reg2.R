@@ -420,8 +420,7 @@ dual_reg2 <- function(
 
   hpf <- 0 # Done already!
 
-  dBOLD <- dim(BOLD)
-  nT <- dim(BOLD)[ldB]
+  nT <- ncol(BOLD) # was updated by scrubbing.
 
   # Prep for dual regression ---------------------------------------------------
 

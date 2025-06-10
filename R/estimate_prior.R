@@ -1262,6 +1262,7 @@ estimate_prior <- function(
   dat_struct <- switch(FORMAT,
     CIFTI = ciftiTools::newdata_xifti(xii1, 0),
     GIFTI = list(hemisphere=ghemi),
+    NIFTI = NULL,
     MATRIX = NULL
   )
 

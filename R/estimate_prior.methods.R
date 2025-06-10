@@ -82,7 +82,7 @@ summary.prior.nifti <- function(object, ...) {
 
   x <- c(
     list(
-      mask_dims=dim(object$dat_struct),
+      mask_dims=dim(object$mask_input),
       nV=nrow(object$prior$mean),
       nL=ncol(object$prior$mean),
       hasDR="DR" %in% names(object)
@@ -553,7 +553,7 @@ plot.prior.nifti <- function(x, stat=c("mean", "sd", "var"),
     n_slices <- as.numeric(n_slices)
     if (length(n_slices) > 1) { warning("Using the first entry of `slice`."); n_slices <- n_slices[1] }
     # Pick slices that are spaced out, and with many voxels.
-    mask_count <- apply(x$dat_struct, plane_dim, sum)
+    mask_count <- apply(x$mask_input, plane_dim, sum)
     ns_all <- length(mask_count)
     slices <- seq(ns_all)
     # Remove slices with zero voxels.
@@ -574,7 +574,7 @@ plot.prior.nifti <- function(x, stat=c("mean", "sd", "var"),
     slices <- slices[round(seq(1, length(slices), length.out=n_slices))]
   } else {
     slices <- as.numeric(slices)
-    stopifnot(all(slices %in% seq(dim(x$dat_struct)[plane_dim])))
+    stopifnot(all(slices %in% seq(dim(x$mask_input)[plane_dim])))
   }
 
   ssname <- if (stat == "mean") {
