@@ -1131,6 +1131,9 @@ estimate_prior <- function(
           # a) log|X| = 2*sum(log(diag(L))), where L is the upper or lower triangular Cholesky matrix
           # b) a'X^(-1)a can be written b'b, where b = R_p^(-T)*P*a, where R_p is the upper triangular Cholesky matrix
       for(pp in 1:FC_nPivots){
+        # count errors in chol
+        counter_env <- new.env()
+        counter_env$count <- 0
 
         #perform Cholesky decomposition on each matrix in FC0 --> dim(FC0) = c(nM, nN, nL, nL)
         Chol_p <- apply(FC0, 1:2, function(x, pivot){ # dim = nChol x nM x nN
@@ -1142,9 +1145,15 @@ estimate_prior <- function(
             chol_xp <- chol(xp)
             chol_xp[upper.tri(chol_xp, diag = TRUE)]
           }, error = function(e) {
+            counter_env$count <- counter_env$count + 1
             rep(NA_real_, length(xp[upper.tri(xp, diag = TRUE)]))
           })
         }, pivot = pivots[[pp]])
+
+        if (verbose) { 
+          cat("\nFailed for", pp, "#", counter_env$count, "\n") 
+        }
+
         #rbind across sessions to form a matrix
         Chol_mat_p <- rbind(t(Chol_p[,1,]), t(Chol_p[,2,])) # dim = nM*nN x nChol
         ## NOHELIA
