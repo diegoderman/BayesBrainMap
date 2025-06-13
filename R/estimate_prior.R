@@ -1130,6 +1130,8 @@ estimate_prior <- function(
       #5. for each sample, compute log determinant and inverse
           # a) log|X| = 2*sum(log(diag(L))), where L is the upper or lower triangular Cholesky matrix
           # b) a'X^(-1)a can be written b'b, where b = R_p^(-T)*P*a, where R_p is the upper triangular Cholesky matrix
+      count_pivot_fails <- 0
+      pivot_failures <- c()
       for(pp in 1:FC_nPivots){
         # count errors in chol
         counter_env <- new.env()
@@ -1138,7 +1140,6 @@ estimate_prior <- function(
         #perform Cholesky decomposition on each matrix in FC0 --> dim(FC0) = c(nM, nN, nL, nL)
         Chol_p <- apply(FC0, 1:2, function(x, pivot){ # dim = nChol x nM x nN
           xp <- x[pivot,pivot]
-          # NOHELIA
           # chol will return an error when there are NAs in FCO or when there is any rank deficiency in one of the sessions
           # if error, return NA instead
           tryCatch({
@@ -1150,13 +1151,13 @@ estimate_prior <- function(
           })
         }, pivot = pivots[[pp]])
 
-        if (verbose) { 
-          cat("\nFailed for", pp, "#", counter_env$count, "\n") 
+        if (counter_env$count > 0) {
+          count_pivot_fails <- count_pivot_fails + 1
+          pivot_failures <- c(pivot_failures, counter_env$count)
         }
 
         #rbind across sessions to form a matrix
         Chol_mat_p <- rbind(t(Chol_p[,1,]), t(Chol_p[,2,])) # dim = nM*nN x nChol
-        ## NOHELIA
         # remove all rows with NA before calling Chol_samp_fun
         Chol_mat_p <- Chol_mat_p[complete.cases(Chol_mat_p), ]
 
@@ -1204,6 +1205,16 @@ estimate_prior <- function(
                                Chol_svd = Chol_svd,
                                pivots = pivots) #need to use these along with FC_samp_cholinv to determine inv(FC)
     } #end Cholesky-based FC prior estimation
+    mean_failures_per_failed_pivot <- if (length(pivot_failures) > 0) {
+      mean(pivot_failures)
+    } else {
+      0
+    }
+    if (verbose) {
+      cat("\n--- Cholesky Error Summary ---\n")
+      cat("Number of pivots with any failures:", count_pivot_fails, "/", FC_nPivots, "\n")
+      cat("Average failures per failed pivot:", round(mean_failures_per_failed_pivot, 2), "\n")
+    }
   }
 
   # [TO DO]: replace with fMRIscrub::unmask_mat or a vector version
