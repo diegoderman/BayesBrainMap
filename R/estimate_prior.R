@@ -1205,15 +1205,19 @@ estimate_prior <- function(
                                Chol_svd = Chol_svd,
                                pivots = pivots) #need to use these along with FC_samp_cholinv to determine inv(FC)
     } #end Cholesky-based FC prior estimation
-    mean_failures_per_failed_pivot <- if (length(pivot_failures) > 0) {
-      mean(pivot_failures)
+    if (length(pivot_failures) > 0) {
+      mean_failures_per_failed_pivot <- mean(pivot_failures)
+      min_failures_per_failed_pivot <- min(pivot_failures)
+      max_failures_per_failed_pivot <- max(pivot_failures) 
     } else {
-      0
+      mean_failures_per_failed_pivot <- 0
+      min_failures_per_failed_pivot <- 0
+      max_failures_per_failed_pivot <- 0
     }
     if (verbose) {
       cat("\n--- Cholesky Error Summary ---\n")
       cat("Number of pivots with any failures:", count_pivot_fails, "/", FC_nPivots, "\n")
-      cat("Average failures per failed pivot:", round(mean_failures_per_failed_pivot, 2), "\n")
+      cat("Failures per failed pivot — mean:", mean_failures_per_failed_pivot, "| range:", min_failures_per_failed_pivot, "to", max_failures_per_failed_pivot, "\n")
     }
   }
 
