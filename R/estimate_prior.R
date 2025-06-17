@@ -1130,16 +1130,36 @@ estimate_prior <- function(
       #5. for each sample, compute log determinant and inverse
           # a) log|X| = 2*sum(log(diag(L))), where L is the upper or lower triangular Cholesky matrix
           # b) a'X^(-1)a can be written b'b, where b = R_p^(-T)*P*a, where R_p is the upper triangular Cholesky matrix
+      count_pivot_fails <- 0
+      pivot_failures <- c()
       for(pp in 1:FC_nPivots){
+        # count errors in chol
+        counter_env <- new.env()
+        counter_env$count <- 0
 
         #perform Cholesky decomposition on each matrix in FC0 --> dim(FC0) = c(nM, nN, nL, nL)
         Chol_p <- apply(FC0, 1:2, function(x, pivot){ # dim = nChol x nM x nN
           xp <- x[pivot,pivot]
-          chol_xp <- chol(xp)
-          chol_xp[upper.tri(chol_xp, diag = TRUE)]
+          # chol will return an error when there are NAs in FCO or when there is any rank deficiency in one of the sessions
+          # if error, return NA instead
+          tryCatch({
+            chol_xp <- chol(xp)
+            chol_xp[upper.tri(chol_xp, diag = TRUE)]
+          }, error = function(e) {
+            counter_env$count <- counter_env$count + 1
+            rep(NA_real_, length(xp[upper.tri(xp, diag = TRUE)]))
+          })
         }, pivot = pivots[[pp]])
+
+        if (counter_env$count > 0) {
+          count_pivot_fails <- count_pivot_fails + 1
+          pivot_failures <- c(pivot_failures, counter_env$count)
+        }
+
         #rbind across sessions to form a matrix
         Chol_mat_p <- rbind(t(Chol_p[,1,]), t(Chol_p[,2,])) # dim = nM*nN x nChol
+        # remove all rows with NA before calling Chol_samp_fun
+        Chol_mat_p <- Chol_mat_p[complete.cases(Chol_mat_p), ]
 
         #take samples
         Chol_samp_pp <- Chol_samp_fun(Chol_mat_p, p=pivots[[pp]], M=FC_nSamp2,
@@ -1185,6 +1205,20 @@ estimate_prior <- function(
                                Chol_svd = Chol_svd,
                                pivots = pivots) #need to use these along with FC_samp_cholinv to determine inv(FC)
     } #end Cholesky-based FC prior estimation
+    if (length(pivot_failures) > 0) {
+      mean_failures_per_failed_pivot <- mean(pivot_failures)
+      min_failures_per_failed_pivot <- min(pivot_failures)
+      max_failures_per_failed_pivot <- max(pivot_failures) 
+    } else {
+      mean_failures_per_failed_pivot <- 0
+      min_failures_per_failed_pivot <- 0
+      max_failures_per_failed_pivot <- 0
+    }
+    if (verbose) {
+      cat("\n--- Cholesky Error Summary ---\n")
+      cat("Number of pivots with any failures:", count_pivot_fails, "/", FC_nPivots, "\n")
+      cat("Failures per failed pivot — mean:", mean_failures_per_failed_pivot, "| range:", min_failures_per_failed_pivot, "to", max_failures_per_failed_pivot, "\n")
+    }
   }
 
   # [TO DO]: replace with fMRIscrub::unmask_mat or a vector version
