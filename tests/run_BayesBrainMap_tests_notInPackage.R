@@ -48,6 +48,19 @@ pr_cii <- estimate_prior(
 #   brainstructures=c("left", "right"), hpf=0
 # )
 
+pr_cii <- estimate_prior(
+  cii_fnames[seq(3)], cii_fnames[c(4,5,6)],
+  template = template_fname["cii"], TR=.72, hpf=.01, FC=FALSE,
+  brainstructures=c("left", "right")
+)
+
+# Check same as:
+# tm_cii <- estimate_template(
+#   cii_fnames[seq(3)], cii_fnames[seq(4,6)],
+#   GICA = GICA_fname["cii"], TR=.72, hpf=.01, FC=FALSE,
+#   brainstructures=c("left", "right")
+# )
+
 # # w/ mask
 # pr2_cii <- estimate_prior(
 #   cii_fnames[seq(3)], template = template_fname["cii"], TR=.72, FC=FALSE, varTol=5000,
