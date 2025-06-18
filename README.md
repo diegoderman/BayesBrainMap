@@ -19,10 +19,10 @@ This package contains functions implementing the BrainMap model proposed
 in Mejia et al. (2019) and the spatial BrainMap model proposed in
 proposed in Mejia et al. (2020+). (Previously, these models were named
 “Template ICA” and were contained in the package
-[templateICAr](github.com/mandymejia/templateICAr).) For both models,
-subject-level brain networks are estimated as deviations from known
-population-level networks, which can be estimated using standard ICA
-algorithms or provided as a parcellation. Both models employ an
+[templateICAr](https://github.com/mandymejia/templateICAr).) For both
+models, subject-level brain networks are estimated as deviations from
+known population-level networks, which can be estimated using standard
+ICA algorithms or provided as a parcellation. Both models employ an
 expectation-maximization algorithm for estimation of the latent brain
 networks and unknown model parameters.
 
@@ -32,8 +32,8 @@ each step are listed below.
 1.  Prior estimation: `estimate_prior`. Can export the results with
     `export_prior`.
 2.  BrainMap model estimation (single-subject): `BrainMap`.
-3.  Identification of areas of engagement in each network (or deviation from
-    the prior mean): `engagements`.
+3.  Identification of areas of engagement in each network (or deviation
+    from the prior mean): `engagements`.
 
 ## Citation
 

@@ -421,7 +421,7 @@ Chol_samp_fun <- function(Chol_vals, p, M, chol_diag, chol_offdiag, Chol_mat_bla
 #'  \code{wb_path} must also be provided.
 #' @param verbose Display progress updates? Default: \code{TRUE}.
 #'
-#' @importFrom stats cov quantile
+#' @importFrom stats cov quantile complete.cases
 #' @importFrom fMRItools is_1 is_integer is_posNum colCenter unmask_mat infer_format_ifti_vec all_binary
 #' @importFrom abind abind
 #'
@@ -1159,7 +1159,7 @@ estimate_prior <- function(
         #rbind across sessions to form a matrix
         Chol_mat_p <- rbind(t(Chol_p[,1,]), t(Chol_p[,2,])) # dim = nM*nN x nChol
         # remove all rows with NA before calling Chol_samp_fun
-        Chol_mat_p <- Chol_mat_p[complete.cases(Chol_mat_p), ]
+        Chol_mat_p <- Chol_mat_p[stats::complete.cases(Chol_mat_p), ]
 
         #take samples
         Chol_samp_pp <- Chol_samp_fun(Chol_mat_p, p=pivots[[pp]], M=FC_nSamp2,
@@ -1217,7 +1217,7 @@ estimate_prior <- function(
     if (verbose) {
       cat("\n--- Cholesky Error Summary ---\n")
       cat("Number of pivots with any failures:", count_pivot_fails, "/", FC_nPivots, "\n")
-      cat("Failures per failed pivot — mean:", mean_failures_per_failed_pivot, "| range:", min_failures_per_failed_pivot, "to", max_failures_per_failed_pivot, "\n")
+      cat("Failures per failed pivot - mean:", mean_failures_per_failed_pivot, "| range:", min_failures_per_failed_pivot, "to", max_failures_per_failed_pivot, "\n")
     }
   }
 
