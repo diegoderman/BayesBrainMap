@@ -36,9 +36,12 @@
 #  (larger to smaller error) and all values should be between zero and \code{epsilon}.
 #' @param usePar Parallelize the computation? Default: \code{FALSE}. Can be the
 #' number of cores to use or \code{TRUE}, which will use the number available minus two.
-#' @param PW Prewhiten to account for residual autocorrelation?
+#' @param PW Prewhiten to account for residual autocorrelation? Default: \code{FALSE}.
 # @param tESS_correction Take into account effective sample size due to temporal autocorrelation?
 # @param sESS_correction Take into account effective sample size due to spatial correlation?
+#' @param seed (Only applicable if \code{PW}) Seed to use for computing temporal
+#'  effective sample size (ESS) to correct sums over \eqn{t}. If \code{NULL},
+#'  do not change the seed. Default: \code{1234}.
 #' @param verbose If \code{TRUE}, display progress of algorithm. Default: \code{FALSE}.
 #'
 #' @return A list of computed values, including the final parameter estimates.
@@ -65,10 +68,11 @@ VB_FCBrainMap <- function(
   miniter=3,
   epsilon=0.001,
   #eps_inter=NULL,
-  usePar=TRUE,
+  usePar=FALSE,
   PW=FALSE,
   #tESS_correction=FALSE,
   #sESS_correction=FALSE,
+  seed=1234,
   verbose=FALSE){
 
   stopifnot(length(prior_params)==2)
@@ -112,7 +116,7 @@ VB_FCBrainMap <- function(
 
   do_PW <- PW; rm(PW)
   if(do_PW){
-    set.seed(1234)
+    if (!is.null(seed)) { set.seed(seed) }
     rvox <- sample(1:nvox, 100)
     #tESS <- rep(NA, 100)
     Cor_E <- matrix(0, ntime, ntime)

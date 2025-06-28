@@ -169,6 +169,9 @@
 # @param sESS_correction To take into account effective sample size due to spatial correlation,
 # provide list of mesh vertices, faces, and data indices (in that order). Default: \code{FALSE}.
 # Only affects FC prior ICA models.
+#' @param seed (Only applicable for FC calculation and if \code{PW}) Seed to use
+#'  for computing temporal effective sample size (ESS) to correct sums over 
+#'  \eqn{t}. If \code{NULL}, do not change the seed. Default: \code{1234}.
 #' @param verbose If \code{TRUE}, display progress of algorithm
 # @param common_smoothness If \code{TRUE}. use the common smoothness version
 #  of the spatial prior ICA model, which assumes that all IC's have the same
@@ -197,8 +200,8 @@
 #'
 #' @examples
 #' \dontrun{
-#'  tm <- estimate_prior(cii1_fnames, cii2_fnames, gICA_fname)
-#'  BrainMap(newcii_fname, tm, spatial_model=TRUE, resamp_res=2000)
+#'  tm <- estimate_prior(cii1_fnames, cii2_fnames, gICA_fname, usePar=FALSE)
+#'  BrainMap(newcii_fname, tm, spatial_model=TRUE, resamp_res=2000, usePar=FALSE)
 #' }
 BrainMap <- function(
   BOLD, prior,
@@ -231,6 +234,7 @@ BrainMap <- function(
   #common_smoothness=TRUE,
   usePar=TRUE,
   PW=FALSE,
+  seed=1234,
   verbose=TRUE){
 
   t0 <- Sys.time()
@@ -357,7 +361,7 @@ BrainMap <- function(
   }
 
   # `BOLD` ---------------------------------------------------------------------
-  cat("\n")
+  if (verbose) { cat("\n") }
   # Determine the format of `BOLD`.
   # [TO DO]: more elegant way? b/c list of xifti vs single xifti...
   format <- suppressWarnings(fMRItools::infer_format_ifti(BOLD))[1]
@@ -590,7 +594,7 @@ BrainMap <- function(
     if (is.character(mask)) { mask <- RNifti::readNifti(mask); mask <- array(as.logical(mask), dim=dim(mask)) }
     if (dim(mask)[length(dim(mask))] == 1) { mask <- array(mask, dim=dim(mask)[length(dim(mask))-1]) }
     if (is.numeric(mask)) {
-      cat("Coercing `mask` to a logical array.\n")
+      message("Coercing `mask` to a logical array.\n")
       mask <- array(as.logical(mask), dim=dim(mask))
     }
     nI <- dim(mask)
@@ -1119,6 +1123,7 @@ BrainMap <- function(
         #eps_inter=eps_inter,
         usePar = usePar,
         PW = PW,
+        seed = seed,
         verbose=verbose
       )
 

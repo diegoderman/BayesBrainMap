@@ -37,7 +37,7 @@ visualization or processing outside of \code{BayesBrainMap}.
 }
 \examples{
 \dontrun{
- tm <- estimate_prior(cii1_fnames, cii2_fnames, gICA_fname)
+ tm <- estimate_prior(cii1_fnames, cii2_fnames, gICA_fname, usePar=FALSE)
  export_prior(tm, out_fname="my_prior", var_method="unbiased")
 }
 

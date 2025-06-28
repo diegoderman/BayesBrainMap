@@ -448,13 +448,14 @@ Chol_samp_fun <- function(Chol_vals, p, M, chol_diag, chol_offdiag, Chol_mat_bla
 #' BOLD <- list(B1=mS, B2=mS, B3=mS)
 #' BOLD <- lapply(BOLD, function(x){x + rnorm(nV*nT, sd=.05)})
 #' template <- mU
-#' estimate_prior(BOLD=BOLD, template=mU, FC_nSamp=2000)
+#' estimate_prior(BOLD=BOLD, template=mU, FC_nSamp=2000, usePar=FALSE)
 #'
 #' \dontrun{
 #'  estimate_prior(
 #'    run1_cifti_fnames, run2_cifti_fnames,
 #'    gICA_cifti_fname, brainstructures="all",
-#'    scale="global", TR=0.71, Q2=NULL, varTol=10
+#'    scale="global", TR=0.71, Q2=NULL, varTol=10,
+#'    usePar=FALSE
 #'  )
 #' }
 estimate_prior <- function(
@@ -533,7 +534,7 @@ estimate_prior <- function(
   }
   stopifnot(fMRItools::is_1(FC, "logical"))
   stopifnot(fMRItools::is_1(varTol, "numeric"))
-  if (varTol < 0) { cat("Setting `varTol=0`."); varTol <- 0 }
+  if (varTol < 0) { message("Setting `varTol=0`."); varTol <- 0 }
   stopifnot(fMRItools::is_posNum(maskTol, zero_ok=TRUE))
   stopifnot(fMRItools::is_posNum(missingTol, zero_ok=TRUE))
   stopifnot(fMRItools::is_1(verbose, "logical"))
@@ -649,7 +650,7 @@ estimate_prior <- function(
   # Check `scale_sm_FWHM`
   if (scale_sm_FWHM !=0 && FORMAT %in% c("NIFTI", "MATRIX")) {
     if (scale_sm_FWHM==2) {
-      cat("Setting `scale_sm_FWHM == 0`.\n")
+      message("Setting `scale_sm_FWHM == 0`.\n")
     } else {
       if (FORMAT == "NIFTI") {
         # [TO DO] make this available
@@ -786,9 +787,9 @@ estimate_prior <- function(
     if (is.character(mask)) { mask <- RNifti::readNifti(mask); mask <- array(as.logical(mask), dim=dim(mask)) }
     if (dim(mask)[length(dim(mask))] == 1) { mask <- array(mask, dim=dim(mask)[length(dim(mask))-1]) }
     if (is.numeric(mask)) {
-      cat("Coercing `mask` to a logical array.\n")
+      message("Coercing `mask` to a logical array.\n")
       if (!fMRItools::all_binary(mask)) {
-        cat("Warning: values other than 0 or 1 in mask.\n")
+        message("Warning: values other than 0 or 1 in mask.\n")
       }
       mask <- array(as.logical(mask), dim=dim(mask))
     }
@@ -828,9 +829,9 @@ estimate_prior <- function(
         stopifnot(is.numeric(mask) || is.logical(mask))
       }
       if (is.numeric(mask)) {
-        cat("Coercing `mask` to a logical vector.\n")
+        message("Coercing `mask` to a logical vector.\n")
         if (!all_binary(mask)) {
-          cat("Warning: values other than 0 or 1 in mask.\n")
+          message("Warning: values other than 0 or 1 in mask.\n")
         }
         mask <- as.logical(mask)
       }
@@ -951,7 +952,7 @@ estimate_prior <- function(
           '\tSubject ', ii,' was skipped (too many masked locations).\n'
         )) }
       } else if (inherits(DR_ii, "try-error")) {
-        cat(paste0(
+        message(paste0(
           '\tSubject ', ii,' was skipped (error).\n'
         ))
         if (ii==1) { message(DR_ii); stop("Error on first subject. Check data?") }

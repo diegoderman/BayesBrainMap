@@ -35,6 +35,7 @@ BrainMap(
   kappa_init = 0.2,
   usePar = TRUE,
   PW = FALSE,
+  seed = 1234,
   verbose = TRUE
 )
 }
@@ -220,6 +221,10 @@ number of cores to use or \code{TRUE}, which will use the number available minus
 \item{PW}{Prewhiten to account for residual autocorrelation? Default: \code{FALSE}.
 Only affects FC prior ICA models.}
 
+\item{seed}{(Only applicable for FC calculation and if \code{PW}) Seed to use
+for computing temporal effective sample size (ESS) to correct sums over
+\eqn{t}. If \code{NULL}, do not change the seed. Default: \code{1234}.}
+
 \item{verbose}{If \code{TRUE}, display progress of algorithm}
 }
 \value{
@@ -241,7 +246,7 @@ expectation-maximization (EM).
 }
 \examples{
 \dontrun{
- tm <- estimate_prior(cii1_fnames, cii2_fnames, gICA_fname)
- BrainMap(newcii_fname, tm, spatial_model=TRUE, resamp_res=2000)
+ tm <- estimate_prior(cii1_fnames, cii2_fnames, gICA_fname, usePar=FALSE)
+ BrainMap(newcii_fname, tm, spatial_model=TRUE, resamp_res=2000, usePar=FALSE)
 }
 }

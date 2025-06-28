@@ -20,49 +20,50 @@ Passes all the tests in `tests/testthat.R`
 
 `BayesBrainMap` will be a new package on CRAN.
 
-## Previous submisison (0.1.1)
+## Previous submisison (0.1.2)
 
-  Possibly misspelled words in DESCRIPTION:
-      ICA (28:5, 29:63, 33:30)
-      al (28:70, 30:38)
-      et (28:67, 30:35)
-      neuroimaging (36:26)
+  \dontrun{} should only be used if the example really cannot be executed
+  (e.g. because of missing additional software, missing API keys, ...) by
+  the user. That's why wrapping examples in \dontrun{} adds the comment
+  ("# Not run:") as a warning for the user. Please replace \dontrun with
+  \donttest.
 
-> These words are correctly spelled.
+  Please unwrap the examples if they are executable in < 5 sec, or replace
+  dontrun{} with \donttest{}.
 
-  Suggests or Enhances not in mainstream repositories:
-    INLA
-  Availability using Additional_repositories specification:
-    INLA   yes   https://inla.r-inla-download.org/R/testing
+  Please wrap examples that need packages in ‘Suggests’ in
+  if(requireNamespace("pkgname")){} instead.
 
-> INLA is a required package specified with Additional_repositories.
+  For more details:
+  <https://contributor.r-project.org/cran-cookbook/general_issues.html#structuring-of-examples>
 
-  Found the following (possibly) invalid file URI:
-    URI: github.com/mandymejia/templateICAr
-      From: README.md
+> The examples wrapped with \dontrun{} really cannot be executed by users, because they require input data which is not possible to provide. These examples are included to help users understand the correspondance between the expected neuroimaging data files and the function arguments. They cannot be converted to \donttest{} because the required input data are too large for practical inclusion. Creating a smaller example would not meaningfully demonstrate the functions’ intended use.
 
-> We have edited the URL to "https://github.com/mandymejia/templateICAr"
+  You write information messages to the console that cannot be easily
+  suppressed.
+  It is more R like to generate objects that can be used to extract the
+  information a user is interested in, and then print() that object.
+  Instead of print()/cat() rather use message()/warning() or
+  if(verbose)cat(..) (or maybe stop()) if you really have to write text to
+  the console. (except for print, summary, interactive functions) ->
+  R/BrainMap.methods.R; R/BrainMap.R; R/dual_reg2.R; R/EM_BrainMap.R;
+  R/engagements.methods.R; R/engagements.R; R/estimate_prior.methods.R;
+  R/estimate_prior.R; R/resample_prior.R; R/rm_nuisIC.R; R/utils.R;
+  R/VB_FCBrainMap.R
+  For more details:
+  <https://contributor.r-project.org/cran-cookbook/code_issues.html#using-printcat>
 
-  Flavor: r-devel-linux-x86_64-debian-gcc, r-devel-windows-x86_64
-  Check: code files for non-ASCII characters, Result: WARNING
-    Found the following file with non-ASCII characters:
-      R/estimate_prior.R
-    Portable packages must use only ASCII characters in their R code and
-    NAMESPACE directives, except perhaps in comments.
-    Use \uxxxx escapes for other characters.
-    Function 'tools::showNonASCIIfile' can help in finding non-ASCII
-    characters in files.
+> All print()/cat() have been wrapped by verbose() or converted to message(), except those inside print and summary functions.
 
-> The non-ASCII character has been replaced.
+  Please ensure that you do not use more than 2 cores in your examples,
+  vignettes, etc.
+  For more details:
+  <https://contributor.r-project.org/cran-cookbook/code_issues.html#using-more-than-2-cores>
 
-  Flavor: r-devel-linux-x86_64-debian-gcc, r-devel-windows-x86_64
-  Check: R code for possible problems, Result: NOTE
-    estimate_prior: no visible global function definition for
-      'complete.cases'
-    Undefined global functions or variables:
-      complete.cases
-    Consider adding
-      importFrom("stats", "complete.cases")
-    to your NAMESPACE file.
+> In the examples for applicable functions, the argument `usePar=FALSE` has been added.
 
-> `importFrom("stats", "complete.cases")` has been added to the NAMESPACE.
+  Please do not set a seed to a specific number within a function.
+  For more details:
+  <https://contributor.r-project.org/cran-cookbook/code_issues.html#setting-a-specific-seed>
+
+> `seed=1234` has been added as an argument to the relevant functions. Users can now set `seed=NULL` to avoid changing the seed.

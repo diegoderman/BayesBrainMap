@@ -75,7 +75,7 @@ struct_prior <- function(prior, FORMAT, mask_input, params, dat_struct, template
 #'
 #' @examples
 #' \dontrun{
-#'  tm <- estimate_prior(cii1_fnames, cii2_fnames, gICA_fname)
+#'  tm <- estimate_prior(cii1_fnames, cii2_fnames, gICA_fname, usePar=FALSE)
 #'  export_prior(tm, out_fname="my_prior", var_method="unbiased")
 #' }
 #'

@@ -353,13 +353,14 @@ mS <- mU \%*\% diag(seq(nQ, 1)) \%*\% matrix(rnorm(nQ*nT), nrow=nQ)
 BOLD <- list(B1=mS, B2=mS, B3=mS)
 BOLD <- lapply(BOLD, function(x){x + rnorm(nV*nT, sd=.05)})
 template <- mU
-estimate_prior(BOLD=BOLD, template=mU, FC_nSamp=2000)
+estimate_prior(BOLD=BOLD, template=mU, FC_nSamp=2000, usePar=FALSE)
 
 \dontrun{
  estimate_prior(
    run1_cifti_fnames, run2_cifti_fnames,
    gICA_cifti_fname, brainstructures="all",
-   scale="global", TR=0.71, Q2=NULL, varTol=10
+   scale="global", TR=0.71, Q2=NULL, varTol=10,
+   usePar=FALSE
  )
 }
 }

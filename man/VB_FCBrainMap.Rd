@@ -21,8 +21,9 @@ VB_FCBrainMap(
   maxiter = 100,
   miniter = 3,
   epsilon = 0.001,
-  usePar = TRUE,
+  usePar = FALSE,
   PW = FALSE,
+  seed = 1234,
   verbose = FALSE
 )
 }
@@ -71,7 +72,11 @@ Default: \code{0.001}.}
 \item{usePar}{Parallelize the computation? Default: \code{FALSE}. Can be the
 number of cores to use or \code{TRUE}, which will use the number available minus two.}
 
-\item{PW}{Prewhiten to account for residual autocorrelation?}
+\item{PW}{Prewhiten to account for residual autocorrelation? Default: \code{FALSE}.}
+
+\item{seed}{(Only applicable if \code{PW}) Seed to use for computing temporal
+effective sample size (ESS) to correct sums over \eqn{t}. If \code{NULL},
+do not change the seed. Default: \code{1234}.}
 
 \item{verbose}{If \code{TRUE}, display progress of algorithm. Default: \code{FALSE}.}
 }
