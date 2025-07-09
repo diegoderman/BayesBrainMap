@@ -493,6 +493,7 @@ estimate_prior <- function(
   # Check arguments ------------------------------------------------------------
 
   # Simple argument checks.
+  if (missing(template)) { stop("Please provide `template`.") }
   if (is.null(scale) || isFALSE(scale)) { scale <- "none" }
   if (isTRUE(scale)) {
     warning(
