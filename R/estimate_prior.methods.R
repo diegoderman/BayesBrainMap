@@ -322,6 +322,8 @@ print.prior.matrix <- function(x, ...) {
 #' @param var_method \code{"non-negative"} (default) or \code{"unbiased"}, for
 #'  the variance estimate of the maps. Note that FC variance estimates are
 #'  always non-negative.
+#' @param FC_labs Labels for each network on the FC plot. If \code{NULL}, the
+#'  network indices or names will be used. Set to \code{FALSE} to not add labels.
 #' @param ... Additional arguments to \code{view_xifti}
 #' @return The plot
 #' @export
@@ -330,7 +332,9 @@ plot.prior.cifti <- function(x,
   stat=c("mean", "sd", "var"),
   maps=TRUE,
   FC=c("emp", "IW", "Chol", "none"),
-  var_method=c("non-negative", "unbiased"), ...) {
+  var_method=c("non-negative", "unbiased"), 
+  FC_labs=NULL,
+  ...) {
   stopifnot(inherits(x, "prior.cifti"))
 
   if (!requireNamespace("ciftiTools", quietly = TRUE)) {
@@ -441,7 +445,20 @@ plot.prior.cifti <- function(x,
         ciftiTools::view_xifti, c(list(tss), args_ss)
       )
     } else if (plt == "FC") {
-      out[[paste0(ss, "_FC")]]  <- fMRItools::plot_FC_gg(dat, title=paste("FC", ssname), diagVal=NULL)
+      net_names <- if (isFALSE(FC_labs)) {
+        NULL
+      } else if(is.null(FC_labs)) {
+        if (!is.null(x$template_parc_table)) {
+          rownames(x$template_parc_table)
+        } else {
+          x$params$inds
+        }
+      } else {
+        FC_labs
+      }
+      out[[paste0(ss, "_FC")]]  <- fMRItools::plot_FC_gg(
+        dat, title=paste("FC", ssname), diagVal=NULL, y_labs = net_names
+      )
       print(out[[paste0(ss, "_FC")]])
     }
   }

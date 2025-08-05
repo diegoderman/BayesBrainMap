@@ -207,6 +207,8 @@ print.bMap.matrix <- function(x, ...) {
 #' @param maps Show the BrianMap estimates on the brain? Default: \code{TRUE}.
 #' @param FC Show the FC estimates? Default: \code{TRUE}. Note that only the
 #'  mean estimate is available for FC, not the SE.
+#' @param FC_labs Labels for each network on the FC plot. If \code{NULL}, the
+#'  network indices or names will be used. Set to \code{FALSE} to not add labels.
 #' @param ... Additional arguments to \code{view_xifti}
 #' @return The plot
 #' @export
@@ -215,6 +217,7 @@ plot.bMap.cifti <- function(x,
   stat=c("mean", "se"),
   maps=TRUE,
   FC=TRUE,
+  FC_labs=NULL,
   ...) {
   stopifnot(inherits(x, "bMap.cifti"))
 
@@ -299,7 +302,16 @@ plot.bMap.cifti <- function(x,
       )
       if (inherits(out[[paste0(ss, "_map")]], "htmlwidget")) { print(out[[paste0(ss, "_map")]]) }
     } else if (plt == "FC") {
-      out[[paste0(ss, "_FC")]]  <- fMRItools::plot_FC_gg(x$FC$mean, title="FC mean", diagVal=NULL)
+      net_names <- if (isFALSE(FC_labs)) {
+        NULL
+      } else if(is.null(FC_labs)) {
+        x$subjNet_mean$meta$cifti$names
+      } else {
+        FC_labs
+      }
+      out[[paste0(ss, "_FC")]]  <- fMRItools::plot_FC_gg(
+        x$FC$mean, title="FC mean", diagVal=NULL, y_labs = net_names
+      )
       print(out[[paste0(ss, "_FC")]])
     }
   }

@@ -42,6 +42,26 @@ pr_cii <- estimate_prior(
   brainstructures=c("left", "right")
 )
 
+xii <- read_cifti(cii_fnames[1], brainstructures = c("left", "right"))
+xii <- move_from_mwall(xii)
+gparc <- resample_cifti(load_parc(), resamp_res=4000)
+q <- data.frame(Key=-1, Red=0, Green=0, Blue=0, Alpha=0, row.names="Medial Wall")
+gparc$meta$cifti$labels$parcels <- rbind(q, gparc$meta$cifti$labels$parcels)
+gparc_dat <- as.matrix(gparc)
+gparc_dat[is.na(as.matrix(xii)[,1]),] <- -1
+gparc <- newdata_xifti(gparc, gparc_dat)
+gparc <- move_to_mwall(gparc, -1)
+pr_cii <- estimate_prior(
+  cii_fnames[seq(3)], template = gparc, TR=.72, hpf=0, FC=TRUE,
+  brainstructures=c("left", "right"), FC_nPivots=4, FC_nSamp=100
+)
+
+pr_cii <- estimate_prior(
+  cii_fnames[seq(3)], template=gparc,
+  TR=.72, hpf=0, FC=FALSE,
+  brainstructures=c("left", "right")
+)
+
 # Check same as:
 # tm_cii <- templateICAr::estimate_template(
 #   cii_fnames[seq(3)], GICA = template_fname["cii"], TR=.72, FC=FALSE,

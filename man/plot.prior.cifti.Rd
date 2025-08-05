@@ -10,6 +10,7 @@
   maps = TRUE,
   FC = c("emp", "IW", "Chol", "none"),
   var_method = c("non-negative", "unbiased"),
+  FC_labs = NULL,
   ...
 )
 }
@@ -28,6 +29,9 @@ for the variance template.}
 \item{var_method}{\code{"non-negative"} (default) or \code{"unbiased"}, for
 the variance estimate of the maps. Note that FC variance estimates are
 always non-negative.}
+
+\item{FC_labs}{Labels for each network on the FC plot. If \code{NULL}, the
+network indices or names will be used. Set to \code{FALSE} to not add labels.}
 
 \item{...}{Additional arguments to \code{view_xifti}}
 }

@@ -4,7 +4,7 @@
 \alias{plot.bMap.cifti}
 \title{Plot BrainMap estiamte}
 \usage{
-\method{plot}{bMap.cifti}(x, stat = c("mean", "se"), maps = TRUE, FC = TRUE, ...)
+\method{plot}{bMap.cifti}(x, stat = c("mean", "se"), maps = TRUE, FC = TRUE, FC_labs = NULL, ...)
 }
 \arguments{
 \item{x}{The result of \code{BrainMap} with CIFTI data}
@@ -15,6 +15,9 @@
 
 \item{FC}{Show the FC estimates? Default: \code{TRUE}. Note that only the
 mean estimate is available for FC, not the SE.}
+
+\item{FC_labs}{Labels for each network on the FC plot. If \code{NULL}, the
+network indices or names will be used. Set to \code{FALSE} to not add labels.}
 
 \item{...}{Additional arguments to \code{view_xifti}}
 }
