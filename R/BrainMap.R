@@ -71,10 +71,12 @@
 #'  resolution of the data, i.e. the time between volumes, in seconds;
 #'  \code{hpf} is the frequency of the high-pass filter, in Hertz. Detrending
 #'  is performed via nuisance regression of DCT bases. Default:
-#'  \code{"prior"} to use the values from the prior. Be sure to set the
-#'  correct \code{TR} if it's different for the new data compared to the data
-#'  used in \code{estimate_prior}.
-#'
+#'  \code{"prior"} to use the values from the prior. Set \code{hpf} to \code{0}
+#'  to disable the high-pass filter. 
+#' 
+#'  Be sure to set the correct \code{TR} if it's different for the new data 
+#'  compared to the data used in \code{estimate_prior}.
+#' 
 #'  Note that if multiple \code{BOLD} sessions are provided, their
 #'  \code{TR} and \code{hpf} must be the same; both arguments accept only one
 #'  value.
@@ -263,6 +265,7 @@ BrainMap <- function(
   if (is.null(TR)) { TR <- "from_xifti_metadata" }
   stopifnot(length(TR)==1) # be explicit, diff TR for multi-BOLD is not allowed
   if (TR == "prior") { TR <- prior$params$TR }
+  if (is.null(hpf)) { hpf <- 0 }
   stopifnot(length(hpf)==1) # be explicit, diff TR for multi-BOLD is not allowed
   if (hpf == "prior") { hpf <- prior$params$hpf }
   if (GSR == "prior") {
@@ -318,7 +321,6 @@ BrainMap <- function(
   stopifnot(is_1(scale_sm_FWHM, "numeric"))
   if (is.list(nuisance)) { stopifnot(length(nuisance)==nN) }
   if (is.list(scrub)) { stopifnot(length(scrub)==nN) }
-  if (is.null(hpf)) { hpf <- 0 }
   stopifnot(is_1(drop_first, "numeric") && drop_first==round(drop_first))
   if (TR!= "from_xifti_metadata") { stopifnot(fMRItools::is_posNum(TR)) }
   stopifnot(fMRItools::is_posNum(hpf, zero_ok=TRUE))

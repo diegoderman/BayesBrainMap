@@ -111,9 +111,11 @@ BOLD session. Default: \code{0}.}
 resolution of the data, i.e. the time between volumes, in seconds;
 \code{hpf} is the frequency of the high-pass filter, in Hertz. Detrending
 is performed via nuisance regression of DCT bases. Default:
-\code{"prior"} to use the values from the prior. Be sure to set the
-correct \code{TR} if it's different for the new data compared to the data
-used in \code{estimate_prior}.
+\code{"prior"} to use the values from the prior. Set \code{hpf} to \code{0}
+to disable the high-pass filter.
+
+Be sure to set the correct \code{TR} if it's different for the new data
+compared to the data used in \code{estimate_prior}.
 
 Note that if multiple \code{BOLD} sessions are provided, their
 \code{TR} and \code{hpf} must be the same; both arguments accept only one
