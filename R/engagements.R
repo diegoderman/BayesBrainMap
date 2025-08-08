@@ -7,8 +7,9 @@
 #' @param u,z Set a threshold value for engagement? A threshold value can be
 #'  specified directly with \code{u}, or a z-score-like threshold in terms of
 #'  standard deviations (the SD of values in the mean prior) can be specified
-#'  with \code{z}. Only one type of threshold can be used. Default: \code{NULL}
-#'  (do not use a threshold). Either argument can also be a vector to test
+#'  with \code{z}. Only one type of threshold can be used. Default:
+#'  \code{z=2}. Set both \code{u} and \code{z} to \code{NULL} to not use a 
+#'  threshold. Either \code{u} or \code{z} can also be a vector to test
 #'  multiple thresholds at once, as long as \code{type} is not \code{"!="}
 #'  (to ensure the engagement regions are successive subsets).
 #' @param alpha Significance level for hypothesis testing. Default: \code{0.01}.
@@ -49,7 +50,7 @@
 #'  engagements(bMap_result, alpha=.05, deviation=TRUE)
 #' }
 engagements <- function(
-  bMap, u=NULL, z=NULL, alpha=0.01,
+  bMap, u=NULL, z=2, alpha=0.01,
   type=c(">", "abs >", "<", "!="),
   method_p='BH',
   verbose=FALSE, which.nets=NULL, deviation=FALSE){
@@ -171,6 +172,8 @@ engagements <- function(
     if (verbose) { cat(eng_name[uu], ".\n") }
     uu_mat <- matrix(u_mat[uu,], nrow=nV, ncol=nL, byrow=TRUE)
 
+    browser()
+
     # Spatial Bayesian brain map engagements -----------------------------------
     if (is_sbMap) {
       if(verbose) cat('Determining areas of engagements based on joint posterior distribution of latent fields\n')
@@ -211,7 +214,7 @@ engagements <- function(
       )
     }
 
-    # Bayesian brain mapping engagements -------------------------------------------------
+    # Bayesian brain mapping engagements ---------------------------------------
     if (is_bMap) {
       if(verbose) cat('\tDetermining areas of engagements based on hypothesis testing at each location\n')
 
