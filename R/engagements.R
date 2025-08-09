@@ -31,9 +31,10 @@
 #'  \code{FALSE}.
 #'
 #' @return A list containing engagement maps for each network, the joint and
-#'  marginal PPMs for each network, and the parameters used for computing
-#'  engagement. If the input represented CIFTI- or NIFTI-format data, then the
-#'  engagements maps will be formatted accordingly.
+#'  marginal PPMs for each network, masks of regions meeting the threshold(s) if
+#'  provided, and the parameters used for computing engagement. If the input 
+#'  represented CIFTI- or NIFTI-format data, then the engagements maps will be
+#'  formatted accordingly.
 #'
 #'  Use \code{summary} to obtain information about the engagements results.
 #'  For CIFTI-format engagements, use \code{plot} to visualize the engagement
@@ -177,8 +178,6 @@ engagements <- function(
     if (verbose) { cat(eng_name[uu], ".\n") }
     uu_mat <- matrix(u_mat[uu,], nrow=nV, ncol=nL, byrow=TRUE)
 
-    browser()
-
     # Spatial Bayesian brain map engagements -----------------------------------
     if (is_sbMap) {
       if(verbose) cat('Determining areas of engagements based on joint posterior distribution of latent fields\n')
@@ -186,14 +185,15 @@ engagements <- function(
       #identify areas of engagement in each network
       engaged <- jointPPM <- marginalPPM <- vars <- matrix(NA, nrow=nV, ncol=nL)
 
+      if(deviation){
+        Dinv_mu_s <-  (as.vector(bMap$s_mean) - as.vector(bMap$t_mean) - uu_mat)/as.vector(sqrt(bMap$t_var))
+      } else {
+        Dinv_mu_s <- (as.vector(bMap$s_mean) - uu_mat)/as.vector(sqrt(bMap$t_var))
+      }
+
       for(q in which.nets){
         if(verbose) cat(paste0('.. network ',q,' (',which(which.nets==q),' of ',length(which.nets),') \n'))
         inds_q <- (1:nV) + (q-1)*nV
-        if(deviation){
-          Dinv_mu_s <-  (as.vector(bMap$s_mean) - as.vector(bMap$t_mean) - uu_mat)/as.vector(sqrt(bMap$t_var))
-        } else {
-          Dinv_mu_s <- (as.vector(bMap$s_mean) - uu_mat)/as.vector(sqrt(bMap$t_var))
-        }
 
         if(q==which.nets[1]) {
           #we scale mu by D^(-1) to use Omega for precision (actual precision of s|y is D^(-1) * Omega * D^(-1) )

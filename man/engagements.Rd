@@ -53,9 +53,10 @@ prior mean, rather than significant areas of engagement. Default:
 }
 \value{
 A list containing engagement maps for each network, the joint and
-marginal PPMs for each network, and the parameters used for computing
-engagement. If the input represented CIFTI- or NIFTI-format data, then the
-engagements maps will be formatted accordingly.
+marginal PPMs for each network, masks of regions meeting the threshold(s) if
+provided, and the parameters used for computing engagement. If the input
+represented CIFTI- or NIFTI-format data, then the engagements maps will be
+formatted accordingly.
 
 Use \code{summary} to obtain information about the engagements results.
 For CIFTI-format engagements, use \code{plot} to visualize the engagement
