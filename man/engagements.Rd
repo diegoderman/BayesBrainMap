@@ -10,7 +10,7 @@ engagements(
   z = 2,
   alpha = 0.01,
   type = c(">", "abs >", "<", "!="),
-  method_p = "BH",
+  method_p = c("BH", "bonferroni"),
   verbose = FALSE,
   which.nets = NULL,
   deviation = FALSE
@@ -36,8 +36,9 @@ value and then testing if they are greater than... .}
 
 \item{method_p}{If the input is a \code{"bMap.[format]"} model object, the
 type of multiple comparisons correction to use for p-values, or \code{NULL}
-for no correction. See \code{help(p.adjust)}. Default: \code{"BH"}
-(Benjamini & Hochberg, i.e. the false discovery rate). Note that multiple
+for no correction. Default: \code{"BH"} (Benjamini & Hochberg, i.e. the
+false discovery rate). Another option is \code{"bonferroni"} correction.
+See \code{help(p.adjust)} for the full list of options. Note that multiple
 comparisons will account for data locations, but not networks.}
 
 \item{verbose}{If \code{TRUE}, display progress of algorithm. Default:

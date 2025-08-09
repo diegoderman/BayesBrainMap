@@ -18,8 +18,9 @@
 #'  value and then testing if they are greater than... .
 #' @param method_p If the input is a \code{"bMap.[format]"} model object, the
 #'  type of multiple comparisons correction to use for p-values, or \code{NULL}
-#'  for no correction. See \code{help(p.adjust)}. Default: \code{"BH"}
-#'  (Benjamini & Hochberg, i.e. the false discovery rate). Note that multiple
+#'  for no correction. Default: \code{"BH"} (Benjamini & Hochberg, i.e. the 
+#'  false discovery rate). Another option is \code{"bonferroni"} correction. 
+#'  See \code{help(p.adjust)} for the full list of options. Note that multiple
 #'  comparisons will account for data locations, but not networks.
 #' @param verbose If \code{TRUE}, display progress of algorithm. Default:
 #'  \code{FALSE}.
@@ -52,8 +53,12 @@
 engagements <- function(
   bMap, u=NULL, z=2, alpha=0.01,
   type=c(">", "abs >", "<", "!="),
-  method_p='BH',
+  method_p=c('BH', 'bonferroni'),
   verbose=FALSE, which.nets=NULL, deviation=FALSE){
+
+  if (length(method_p) == 2 && all(method_p == c('BH', 'bonferroni'))) {
+    method_p <- 'BH'
+  }
 
   # Setup ----------------------------------------------------------------------
   is_bMap <- inherits(bMap, "bMap.matrix") || inherits(bMap, "bMap.cifti") || inherits(bMap, "bMap.nifti")
