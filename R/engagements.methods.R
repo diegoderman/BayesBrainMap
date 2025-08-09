@@ -99,12 +99,17 @@ print.bMap_eng.cifti <- function(x, ...) {
 #'
 #' @param x The engagements from \code{engagements.cifti}
 #' @param stat \code{"engaged"} (default), \code{"pvals"}, \code{"pvals_adj"},
-#'  \code{"tstats"}, or \code{"vars"}.
+#'  \code{"tstats"}, \code{"vars"}, or \code{"thresholded"}.
+#' @param test_level If \code{stat} is not \code{"engaged"}, which test level
+#'  should be used? See \code{names(x)} for the test levels. If \code{NULL}
+#'  (default), the first test level will be used.
 #' @param ... Additional arguments to \code{view_xifti}
 #' @return The engagements plot
 #' @export
 #' @method plot bMap_eng.cifti
-plot.bMap_eng.cifti <- function(x, stat=c("engaged", "pvals", "pvals_adj", "tstats", "se"), ...) {
+plot.bMap_eng.cifti <- function(
+  x, stat=c("engaged", "pvals", "pvals_adj", "tstats", "se", "thresholded"), 
+  test_level=NULL, ...) {
   stopifnot(inherits(x, "bMap_eng.cifti"))
 
   if (!requireNamespace("ciftiTools", quietly = TRUE)) {
@@ -117,7 +122,7 @@ plot.bMap_eng.cifti <- function(x, stat=c("engaged", "pvals", "pvals_adj", "tsta
   has_idx <- "idx" %in% names(args)
   has_fname <- "fname" %in% names(args)
 
-  stat <- match.arg(stat, c("engaged", "pvals", "pvals_adj", "tstats", "se"))
+  stat <- match.arg(stat, c("engaged", "pvals", "pvals_adj", "tstats", "se", "thresholded"))
 
   # Print message saying what's happening.
   msg1 <- ifelse(has_idx,
@@ -129,14 +134,35 @@ plot.bMap_eng.cifti <- function(x, stat=c("engaged", "pvals", "pvals_adj", "tsta
     pvals="p values.",
     pvals_adj="adjusted p values.",
     tstats="t statistics.",
-    se="standard errors."
+    se="standard errors.",
+    thresholded="thresholded maps."
   )
   cat(msg1, msg2, "\n")
 
+  if (is.null(test_level)) {
+    test_level <- 2
+  } else {
+    stopifnot(fMRItools::is_1(test_level, "character"))
+    stopifnot(test_level %in% names(x))
+  }
+
+
   if (stat == "engaged") {
     x <- x$engaged
+  } else if (stat == "thresholded") {
+    x$engaged <- move_to_mwall(x$engaged, -1)
+    x <- ciftiTools::newdata_xifti(x$engaged, x[[test_level]]$thresholded)
+    x <- move_from_mwall(x, -1)
+    x <- ciftiTools::convert_xifti(x, "dlabel",
+      levels_old=c(-1, 0, 1),
+      levels=c(-1, 0, 1),
+      labels=c("Medial Wall", "Threshold not met", "Threshold met"),
+      colors=c("#888888", "white", "blue"),
+      add_white=FALSE
+    )
   } else {
-    x <- ciftiTools::newdata_xifti(x$se, as.matrix(x[[stat]]))
+    x$engaged <- move_to_mwall(x$engaged, -1)
+    x <- ciftiTools::newdata_xifti(x$engaged, x[[test_level]][[stat]])
   }
 
   ss <- stat # to match `plot.prior.cifti`

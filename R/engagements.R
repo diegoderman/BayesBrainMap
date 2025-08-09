@@ -8,7 +8,7 @@
 #'  specified directly with \code{u}, or a z-score-like threshold in terms of
 #'  standard deviations (the SD of values in the mean prior) can be specified
 #'  with \code{z}. Only one type of threshold can be used. Default:
-#'  \code{z=2}. Set both \code{u} and \code{z} to \code{NULL} to not use a 
+#'  \code{z=2}. Set both \code{u} and \code{z} to \code{NULL} to not use a
 #'  threshold. Either \code{u} or \code{z} can also be a vector to test
 #'  multiple thresholds at once, as long as \code{type} is not \code{"!="}
 #'  (to ensure the engagement regions are successive subsets).
@@ -18,8 +18,8 @@
 #'  value and then testing if they are greater than... .
 #' @param method_p If the input is a \code{"bMap.[format]"} model object, the
 #'  type of multiple comparisons correction to use for p-values, or \code{NULL}
-#'  for no correction. Default: \code{"BH"} (Benjamini & Hochberg, i.e. the 
-#'  false discovery rate). Another option is \code{"bonferroni"} correction. 
+#'  for no correction. Default: \code{"BH"} (Benjamini & Hochberg, i.e. the
+#'  false discovery rate). Another option is \code{"bonferroni"} correction.
 #'  See \code{help(p.adjust)} for the full list of options. Note that multiple
 #'  comparisons will account for data locations, but not networks.
 #' @param verbose If \code{TRUE}, display progress of algorithm. Default:
@@ -32,7 +32,7 @@
 #'
 #' @return A list containing engagement maps for each network, the joint and
 #'  marginal PPMs for each network, masks of regions meeting the threshold(s) if
-#'  provided, and the parameters used for computing engagement. If the input 
+#'  provided, and the parameters used for computing engagement. If the input
 #'  represented CIFTI- or NIFTI-format data, then the engagements maps will be
 #'  formatted accordingly.
 #'
@@ -178,19 +178,26 @@ engagements <- function(
     if (verbose) { cat(eng_name[uu], ".\n") }
     uu_mat <- matrix(u_mat[uu,], nrow=nV, ncol=nL, byrow=TRUE)
 
+    bMap_diff <- bMap$s_mean - bMap$t_mean
+    bMap_diff_dev <- bMap_diff - uu_mat
+
+    thresholded <- switch(type,
+      `>`= bMap_diff_dev > 0,
+      `abs >`= abs(bMap_diff_dev) > 0,
+      `<` = bMap_diff_dev < 0,
+      `!=` = NULL
+    )
+
     # Spatial Bayesian brain map engagements -----------------------------------
     if (is_sbMap) {
       if(verbose) cat('Determining areas of engagements based on joint posterior distribution of latent fields\n')
 
+      Dinv_mu_s <- as.vector(
+        (if (deviation) { bMap_diff_dev } else { bMap_diff }) / bMap$t_var
+      )
+
       #identify areas of engagement in each network
       engaged <- jointPPM <- marginalPPM <- vars <- matrix(NA, nrow=nV, ncol=nL)
-
-      if(deviation){
-        Dinv_mu_s <-  (as.vector(bMap$s_mean) - as.vector(bMap$t_mean) - uu_mat)/as.vector(sqrt(bMap$t_var))
-      } else {
-        Dinv_mu_s <- (as.vector(bMap$s_mean) - uu_mat)/as.vector(sqrt(bMap$t_var))
-      }
-
       for(q in which.nets){
         if(verbose) cat(paste0('.. network ',q,' (',which(which.nets==q),' of ',length(which.nets),') \n'))
         inds_q <- (1:nV) + (q-1)*nV
@@ -215,7 +222,8 @@ engagements <- function(
       if (length(unique(u))==1) { u <- u[1] }
       if (length(unique(z))==1) { z <- z[1] }
       out[[uu]] <- list(
-        engaged=engaged, jointPPM=jointPPM, marginalPPM=marginalPPM, vars=vars
+        engaged=engaged, jointPPM=jointPPM, marginalPPM=marginalPPM, vars=vars,
+        thresholded=thresholded
       )
     }
 
@@ -224,11 +232,8 @@ engagements <- function(
       if(verbose) cat('\tDetermining areas of engagements based on hypothesis testing at each location\n')
 
       nL <- ncol(bMap$s_mean)
-      if(deviation){
-        t_stat <- (as.matrix(bMap$s_mean) - bMap$t_mean - uu_mat) / as.matrix(bMap$s_se)
-      } else {
-        t_stat <- (as.matrix(bMap$s_mean) - uu_mat) / as.matrix(bMap$s_se)
-      }
+
+      t_stat <- (if (deviation) { bMap_diff_dev } else { bMap_diff }) / bMap$s_se
 
       if(type=='>') pvals <- 1-pnorm(t_stat)
       if(type=='<') pvals <- pnorm(t_stat)
@@ -246,7 +251,8 @@ engagements <- function(
       out[[uu]] <- list(
         engaged = engaged,
         pvals = pvals, pvals_adj = pvals_adj,
-        se = bMap$s_se, tstats = t_stat
+        se = bMap$s_se, tstats = t_stat,
+        thresholded = thresholded
       )
     }
   }

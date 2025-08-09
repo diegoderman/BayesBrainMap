@@ -4,13 +4,22 @@
 \alias{plot.bMap_eng.cifti}
 \title{Plot engagements}
 \usage{
-\method{plot}{bMap_eng.cifti}(x, stat = c("engaged", "pvals", "pvals_adj", "tstats", "se"), ...)
+\method{plot}{bMap_eng.cifti}(
+  x,
+  stat = c("engaged", "pvals", "pvals_adj", "tstats", "se", "thresholded"),
+  test_level = NULL,
+  ...
+)
 }
 \arguments{
 \item{x}{The engagements from \code{engagements.cifti}}
 
 \item{stat}{\code{"engaged"} (default), \code{"pvals"}, \code{"pvals_adj"},
-\code{"tstats"}, or \code{"vars"}.}
+\code{"tstats"}, \code{"vars"}, or \code{"thresholded"}.}
+
+\item{test_level}{If \code{stat} is not \code{"engaged"}, which test level
+should be used? See \code{names(x)} for the test levels. If \code{NULL}
+(default), the first test level will be used.}
 
 \item{...}{Additional arguments to \code{view_xifti}}
 }
