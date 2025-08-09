@@ -17,9 +17,9 @@
 \item{stat}{\code{"engaged"} (default), \code{"pvals"}, \code{"pvals_adj"},
 \code{"tstats"}, \code{"vars"}, or \code{"thresholded"}.}
 
-\item{test_level}{If \code{stat} is not \code{"engaged"}, which test level
-should be used? See \code{names(x)} for the test levels. If \code{NULL}
-(default), the first test level will be used.}
+\item{test_level}{If \code{stat} is not \code{"engaged"} or \code{thresholded},
+which test level should be used? See \code{names(x)} for the test levels.
+If \code{NULL} (default), the first test level will be used.}
 
 \item{...}{Additional arguments to \code{view_xifti}}
 }

@@ -100,15 +100,15 @@ print.bMap_eng.cifti <- function(x, ...) {
 #' @param x The engagements from \code{engagements.cifti}
 #' @param stat \code{"engaged"} (default), \code{"pvals"}, \code{"pvals_adj"},
 #'  \code{"tstats"}, \code{"vars"}, or \code{"thresholded"}.
-#' @param test_level If \code{stat} is not \code{"engaged"}, which test level
-#'  should be used? See \code{names(x)} for the test levels. If \code{NULL}
-#'  (default), the first test level will be used.
+#' @param test_level If \code{stat} is not \code{"engaged"} or \code{thresholded},
+#'  which test level should be used? See \code{names(x)} for the test levels.
+#'  If \code{NULL} (default), the first test level will be used.
 #' @param ... Additional arguments to \code{view_xifti}
 #' @return The engagements plot
 #' @export
 #' @method plot bMap_eng.cifti
 plot.bMap_eng.cifti <- function(
-  x, stat=c("engaged", "pvals", "pvals_adj", "tstats", "se", "thresholded"), 
+  x, stat=c("engaged", "pvals", "pvals_adj", "tstats", "se", "thresholded"),
   test_level=NULL, ...) {
   stopifnot(inherits(x, "bMap_eng.cifti"))
 
@@ -151,13 +151,17 @@ plot.bMap_eng.cifti <- function(
     x <- x$engaged
   } else if (stat == "thresholded") {
     x$engaged <- move_to_mwall(x$engaged, -1)
-    x <- ciftiTools::newdata_xifti(x$engaged, x[[test_level]]$thresholded)
+    all_test_levels <- names(x)[!(names(x) %in% c("engaged", "params"))]
+    nU <- length(all_test_levels)
+    x_sum <- Reduce("+", lapply(x[all_test_levels], '[[', "thresholded"))
+    x <- ciftiTools::newdata_xifti(x$engaged, x_sum)
     x <- move_from_mwall(x, -1)
+    thresholded_colors <- rev(ciftiTools::make_color_pal("plasma")$color)[round(seq(nU)/nU*256)]
     x <- ciftiTools::convert_xifti(x, "dlabel",
-      levels_old=c(-1, 0, 1),
-      levels=c(-1, 0, 1),
-      labels=c("Medial Wall", "Threshold not met", "Threshold met"),
-      colors=c("#888888", "white", "blue"),
+      levels_old=c(-1, 0, seq(nU)),
+      levels=c(-1, 0, seq(nU)),
+      labels=c("Medial Wall", "Threshold not met", all_test_levels),
+      colors=c("#888888", "white", thresholded_colors),
       add_white=FALSE
     )
   } else {
