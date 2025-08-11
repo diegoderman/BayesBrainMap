@@ -9,9 +9,9 @@
 #' @method summary bMap_eng.cifti
 summary.bMap_eng.cifti <- function(object, ...) {
 
-  nC <- length(object) - 2 # list items beside "engaged" and "params"
-  act_counts_lenient <- colSums(as.matrix(object$engaged)>0, na.rm=TRUE)
-  act_counts_strict <- colSums(as.matrix(object$engaged)==nC, na.rm=TRUE)
+  nU <- dim(object$pvals)[3]
+  act_counts_lenient <- colSums(object$engaged_mat[,,1], na.rm=TRUE)
+  act_counts_strict <- colSums(object$engaged_mat[,,nU], na.rm=TRUE)
   verts_with_data_per_bs <- vapply(
     object$engaged$data[!vapply(object$engaged$data, is.null, FALSE)],
     function(q){sum(q[,1]>-1, na.rm=TRUE)},
@@ -19,7 +19,7 @@ summary.bMap_eng.cifti <- function(object, ...) {
   )
   x <- c(
     summary(object$engaged),
-    list(nC=nC),
+    list(nU=nU),
     list(engagement_name=do.call(
       format_engagement_name,
       c(object$params[c("u", "z", "type", "deviation")], list(collapse=TRUE))
@@ -68,14 +68,14 @@ print.summary.bMap_eng.cifti <- function(x, ...) {
   cat(
     "Engaged Loc (%): ",
     paste0(paste(apct_lenient[seq(nMeasShow)], collapse=", "), nMeasTriC),
-    ifelse(x$nC > 1, paste0("(most lenient ", cname, ")"), ""),
+    ifelse(x$nU > 1, paste0("(most lenient ", cname, ")"), ""),
     "\n"
   )
   if (!all(x$act_counts_lenient == x$act_counts_strict)) {
     cat(
       "Engaged Loc (%): ",
       paste0(paste(apct_strict[seq(nMeasShow)], collapse=", "), nMeasTriC),
-      ifelse(x$nC > 1, paste0("(most strict ", cname, ")"), ""),
+      ifelse(x$nU > 1, paste0("(most strict ", cname, ")"), ""),
       "\n"
     )
   }
@@ -101,7 +101,7 @@ print.bMap_eng.cifti <- function(x, ...) {
 #' @param stat \code{"engaged"} (default), \code{"pvals"}, \code{"pvals_adj"},
 #'  \code{"tstats"}, \code{"vars"}, or \code{"thresholded"}.
 #' @param test_level If \code{stat} is not \code{"engaged"} or \code{thresholded},
-#'  which test level should be used? See \code{names(x)} for the test levels.
+#'  which test level should be used? See \code{dimnames(x$engaged_mat)[[3]]} for the test levels.
 #'  If \code{NULL} (default), the first test level will be used.
 #' @param ... Additional arguments to \code{view_xifti}
 #' @return The engagements plot
@@ -140,22 +140,21 @@ plot.bMap_eng.cifti <- function(
   cat(msg1, msg2, "\n")
 
   if (is.null(test_level)) {
-    test_level <- 2
+    test_level <- 1
   } else {
     stopifnot(fMRItools::is_1(test_level, "character"))
     stopifnot(test_level %in% names(x))
   }
 
-
   if (stat == "engaged") {
     x <- x$engaged
   } else if (stat == "thresholded") {
-    x$engaged <- move_to_mwall(x$engaged, -1)
-    all_test_levels <- names(x)[!(names(x) %in% c("engaged", "params"))]
+    x$engaged <- ciftiTools::move_to_mwall(x$engaged, -1)
+    all_test_levels <- dimnames(x$engaged_mat)[[3]]
     nU <- length(all_test_levels)
-    x_sum <- Reduce("+", lapply(x[all_test_levels], '[[', "thresholded"))
+    x_sum <- apply(x$thresholded, seq(2), sum)
     x <- ciftiTools::newdata_xifti(x$engaged, x_sum)
-    x <- move_from_mwall(x, -1)
+    x <- ciftiTools::move_from_mwall(x, -1)
     thresholded_colors <- rev(ciftiTools::make_color_pal("plasma")$color)[round(seq(nU)/nU*256)]
     x <- ciftiTools::convert_xifti(x, "dlabel",
       levels_old=c(-1, 0, seq(nU)),
@@ -165,8 +164,9 @@ plot.bMap_eng.cifti <- function(
       add_white=FALSE
     )
   } else {
-    x$engaged <- move_to_mwall(x$engaged, -1)
-    x <- ciftiTools::newdata_xifti(x$engaged, x[[test_level]][[stat]])
+    x$engaged <- ciftiTools::move_to_mwall(x$engaged, -1)
+    x$engaged <- convert_xifti(x$engaged, "dscalar")
+    x <- ciftiTools::newdata_xifti(x$engaged, x[[stat]][,,test_level])
   }
 
   ss <- stat # to match `plot.prior.cifti`

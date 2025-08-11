@@ -18,7 +18,7 @@
 \code{"tstats"}, \code{"vars"}, or \code{"thresholded"}.}
 
 \item{test_level}{If \code{stat} is not \code{"engaged"} or \code{thresholded},
-which test level should be used? See \code{names(x)} for the test levels.
+which test level should be used? See \code{dimnames(x$engaged_mat)[[3]]} for the test levels.
 If \code{NULL} (default), the first test level will be used.}
 
 \item{...}{Additional arguments to \code{view_xifti}}

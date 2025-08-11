@@ -111,7 +111,7 @@ engagements <- function(
 
   if (deviation) {
     if (!is.null(z)) { stop("`z` not compatible with `deviation==TRUE`.") }
-    if (u != 0) { warning("`u != 0` not advised for `deviation==TRUE`. Proceeding anyway.") }
+    if (any(u != 0)) { warning("`u != 0` not advised for `deviation==TRUE`. Proceeding anyway.") }
   }
 
   # Get needed metadata from `bMap`.
@@ -178,8 +178,8 @@ engagements <- function(
     if (verbose) { cat(eng_name[uu], ".\n") }
     uu_mat <- matrix(u_mat[uu,], nrow=nV, ncol=nL, byrow=TRUE)
 
-    bMap_diff <- bMap$s_mean - bMap$t_mean
-    bMap_diff_dev <- bMap_diff - uu_mat
+    bMap_diff <- bMap$s_mean - uu_mat
+    bMap_diff_dev <- bMap_diff - bMap$t_mean
 
     thresholded <- switch(type,
       `>`= bMap_diff_dev > 0,
@@ -297,13 +297,24 @@ engagements <- function(
     names(engaged$meta$cifti$labels) <- netNames[which.nets]
   }
 
-  result <- c(
-    list(engaged=engaged),
-    out,
-    list(params=list(
+  for (uu in seq(nU)) {
+    for (aa in seq(length(out[[uu]]))) {
+      colnames(out[[uu]][[aa]]) <- netNames
+    }
+  }
+
+  result <- list(
+    engaged=engaged,
+    engaged_mat=abind(lapply(out, '[[', "engaged"), along=3),
+    pvals=abind(lapply(out, '[[', "pvals"), along=3),
+    pvals_adj=abind(lapply(out, '[[', "pvals_adj"), along=3),
+    se=abind(lapply(out, '[[', "se"), along=3),
+    tstats=abind(lapply(out, '[[', "tstats"), along=3),
+    thresholded=abind(lapply(out, '[[', "thresholded"), along=3),
+    params=list(
       alpha=alpha, method_p=method_p, type=type, u=u, z=z,
       which.nets=which.nets, deviation=deviation
-    ))
+    )
   )
 
   if (FORMAT == "CIFTI") {
