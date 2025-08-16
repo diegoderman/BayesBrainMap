@@ -611,8 +611,8 @@ BrainMap <- function(
     nI <- nrow(prior$prior$mean)
   }
 
-  # Get IC inds.
-  IC_inds <- prior$params$inds
+  # Get network indices.
+  net_inds <- prior$params$inds
 
   # Get the data mask based on missing values, & low variance locations
   mask2 <- prior$mask
@@ -1221,7 +1221,7 @@ BrainMap <- function(
 
   if (FORMAT %in% c("CIFTI", "GIFTI") && !is.null(xii1)) {
     xiiL <- ciftiTools::select_xifti(xii1, rep(1, nL))
-    xiiL <- ciftiTools::convert_to_dscalar(xiiL, names=paste("IC", IC_inds))
+    xiiL <- ciftiTools::convert_to_dscalar(xiiL, names=paste("Network", net_inds))
     result$subjNet_mean <- ciftiTools::newdata_xifti(xiiL, result$subjNet_mean)
     result$subjNet_se <- ciftiTools::newdata_xifti(xiiL, result$subjNet_se)
 
