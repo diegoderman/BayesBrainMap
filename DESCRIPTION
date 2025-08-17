@@ -39,7 +39,7 @@ Additional_repositories: https://inla.r-inla-download.org/R/testing
 Encoding: UTF-8
 Imports:
     abind,
-    fMRItools (>= 0.5.3),
+    fMRItools (>= 0.7.1),
     fMRIscrub (>= 0.14.5),
     foreach,
     Matrix,

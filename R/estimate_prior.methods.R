@@ -357,7 +357,7 @@ plot.prior.cifti <- function(x,
   has_title <- "title" %in% names(args)
   has_idx <- "idx" %in% names(args)
   has_fname <- "fname" %in% names(args)
-  has_labs <- "y_labs" %in% names(args)
+  has_labs <- "labs" %in% names(args)
 
   # Print message saying what's happening.
   msg1 <- ifelse(has_idx || what=="FC",
@@ -466,7 +466,7 @@ plot.prior.cifti <- function(x,
       } else {
         x$params$inds
       }
-      args_ss$y_labs <- net_names
+      args_ss$labs <- net_names
     }
     if (!("diagVal" %in% names(args_ss)) && stat!="mean") { args_ss$diagVal <- 0 }
     if (!("colFUN" %in% names(args_ss)) && stat=="mean") {
@@ -592,7 +592,7 @@ plot.prior.nifti <- function(x,
   has_title <- "title" %in% names(args)
   has_idx <- "idx" %in% names(args)
   has_fname <- "fname" %in% names(args)
-  has_labs <- "y_labs" %in% names(args)
+  has_labs <- "labs" %in% names(args)
 
   # Check `idx`
   if (has_idx) {
@@ -750,7 +750,7 @@ plot.prior.nifti <- function(x,
       } else {
         x$params$inds
       }
-      args_ss$y_labs <- net_names
+      args_ss$labs <- net_names
     }
     if (!("diagVal" %in% names(args_ss)) && stat!="mean") { args_ss$diagVal <- 0 }
     if (!("colFUN" %in% names(args_ss)) && stat=="mean") {

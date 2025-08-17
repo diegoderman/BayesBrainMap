@@ -240,7 +240,7 @@ plot.bMap.cifti <- function(x,
   has_title <- "title" %in% names(args)
   has_idx <- "idx" %in% names(args)
   has_fname <- "fname" %in% names(args)
-  has_labs <- "y_labs" %in% names(args)
+  has_labs <- "labs" %in% names(args)
 
   # Print message saying what's happening.
   msg1 <- ifelse(has_idx || what=="FC",
@@ -318,7 +318,7 @@ plot.bMap.cifti <- function(x,
   } else if (what == "FC") {
     if (!has_labs) {
       net_names <- x$subjNet_mean$meta$cifti$names
-      args_ss$y_labs <- net_names
+      args_ss$labs <- net_names
     }
     if (!("diagVal" %in% names(args_ss)) && stat!="mean") { args_ss$diagVal <- 0 }
     if (!("colFUN" %in% names(args_ss)) && stat=="mean") {
