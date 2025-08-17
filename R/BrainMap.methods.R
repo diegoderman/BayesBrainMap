@@ -206,6 +206,10 @@ print.bMap.matrix <- function(x, ...) {
 #' @param what The \code{"maps"} (default) on the brain, or the \code{"FC"} 
 #'  matrix. If both are desired, use two separate \code{plot} calls to first
 #'  plot the maps and then plot the FC.
+#' 
+#'  If \code{"FC"}, the default color scale will be from blue (-1) to red (1).
+#'  This can be changed with the \code{colFUN} argument to 
+#'  \code{\link[fMRItools]{plot_FC_gg}}.
 #' @param stat \code{"mean"} (default) or \code{"se"}. Note that for the FC,
 #'  only the mean estimate is available, not the SE.
 #' @param ... Additional arguments to \code{\link[ciftiTools]{view_xifti}} 
@@ -317,6 +321,18 @@ plot.bMap.cifti <- function(x,
       args_ss$y_labs <- net_names
     }
     if (!("diagVal" %in% names(args_ss)) && stat!="mean") { args_ss$diagVal <- 0 }
+    if (!("colFUN" %in% names(args_ss)) && stat=="mean") {
+      if (!requireNamespace("ggplot2", quietly = TRUE)) {
+        stop("Package \"ggplot2\" needed to read NIFTI data. Please install it.", call. = FALSE)
+      }
+        if (!requireNamespace("grDevices", quietly = TRUE)) {
+        stop("Package \"grDevices\" needed to read NIFTI data. Please install it.", call. = FALSE)
+      }
+      gvals <- grDevices::hcl.colors(3, palette="Blue-Red2")
+      args_ss$colFUN <- function(limits=c(-1,1), ...){
+        ggplot2::scale_fill_gradient2(low=gvals[1], mid=gvals[2], high=gvals[3], limits=limits, ...)
+      }
+    }
     out <- do.call(
       fMRItools::plot_FC_gg, c(list(x$FC$mean), args_ss)
     )

@@ -18,7 +18,11 @@
 
 \item{what}{The \code{"maps"} (default) on the brain, or the \code{"FC"}
 matrix. If both are desired, use two separate \code{plot} calls to first
-plot the maps and then plot the FC.}
+plot the maps and then plot the FC.
+
+If \code{"FC"}, the default color scale will be from blue (-1) to red (1).
+This can be changed with the \code{colFUN} argument to
+\code{\link[fMRItools]{plot_FC_gg}}.}
 
 \item{stat}{Which prior statistic to plot: the \code{"mean"} (default),
 \code{"sd"} for the square root of the variance template, or \code{"var"}
