@@ -4,22 +4,21 @@
 \alias{plot.bMap.cifti}
 \title{Plot BrainMap estiamte}
 \usage{
-\method{plot}{bMap.cifti}(x, stat = c("mean", "se"), maps = TRUE, FC = TRUE, FC_labs = NULL, ...)
+\method{plot}{bMap.cifti}(x, what = c("maps", "FC"), stat = c("mean", "se"), ...)
 }
 \arguments{
 \item{x}{The result of \code{BrainMap} with CIFTI data}
 
-\item{stat}{\code{"mean"} (default) or \code{"se"}.}
+\item{what}{The \code{"maps"} (default) on the brain, or the \code{"FC"}
+matrix. If both are desired, use two separate \code{plot} calls to first
+plot the maps and then plot the FC.}
 
-\item{maps}{Show the BrianMap estimates on the brain? Default: \code{TRUE}.}
+\item{stat}{\code{"mean"} (default) or \code{"se"}. Note that for the FC,
+only the mean estimate is available, not the SE.}
 
-\item{FC}{Show the FC estimates? Default: \code{TRUE}. Note that only the
-mean estimate is available for FC, not the SE.}
-
-\item{FC_labs}{Labels for each network on the FC plot. If \code{NULL}, the
-network indices or names will be used. Set to \code{FALSE} to not add labels.}
-
-\item{...}{Additional arguments to \code{view_xifti}}
+\item{...}{Additional arguments to \code{\link[ciftiTools]{view_xifti}}
+if \code{what=="maps"}, or \code{\link[fMRItools]{plot_FC_gg}} if
+\code{what=="FC"}.}
 }
 \value{
 The plot

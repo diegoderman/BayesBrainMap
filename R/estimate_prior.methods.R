@@ -313,116 +313,396 @@ print.prior.matrix <- function(x, ...) {
 #' Plot prior
 #'
 #' @param x The prior from \code{estimate_prior.cifti}
+#' @param what The \code{"maps"} (default) on the brain, or the \code{"FC"} 
+#'  matrix. If both are desired, use two separate \code{plot} calls to first
+#'  plot the maps and then plot the FC.
 #' @param stat Which prior statistic to plot: the \code{"mean"} (default),
 #'  \code{"sd"} for the square root of the variance template, or \code{"var"}
 #'  for the variance template.
-#' @param maps Show the prior maps on the brain? Default: \code{TRUE}.
-#' @param FC Empirical (\code{"emp"}) (default), Inverse-Wishart
-#'  (\code{"IW"}), Cholesky (\code{"Chol"}), or \code{"none"}.
 #' @param var_method \code{"non-negative"} (default) or \code{"unbiased"}, for
 #'  the variance estimate of the maps. Note that FC variance estimates are
 #'  always non-negative.
-#' @param FC_labs Labels for each network on the FC plot. If \code{NULL}, the
-#'  network indices or names will be used. Set to \code{FALSE} to not add labels.
-#' @param ... Additional arguments to \code{view_xifti}
+#' @param FC_method If \code{what=="FC"}: empirical (\code{"emp"}) (default), 
+#'  Inverse-Wishart (\code{"IW"}), or Cholesky (\code{"Chol"}).
+#' @param ... Additional arguments to \code{\link[ciftiTools]{view_xifti}} 
+#'  if \code{what=="maps"}, or \code{\link[fMRItools]{plot_FC_gg}} if 
+#'  \code{what=="FC"}.
 #' @return The plot
 #' @export
 #' @method plot prior.cifti
 plot.prior.cifti <- function(x,
+  what=c("maps", "FC"),
   stat=c("mean", "sd", "var"),
-  maps=TRUE,
-  FC=c("emp", "IW", "Chol", "none"),
   var_method=c("non-negative", "unbiased"), 
-  FC_labs=NULL,
+  FC_method=c("emp", "IW", "Chol", "none"),
   ...) {
+  
   stopifnot(inherits(x, "prior.cifti"))
 
   if (!requireNamespace("ciftiTools", quietly = TRUE)) {
     stop("Package \"ciftiTools\" needed to read NIFTI data. Please install it.", call. = FALSE)
   }
 
+  what <- match.arg(what, c("maps", "FC"))
   stat <- match.arg(stat, c("mean", "sd", "var"))
-  stopifnot(isTRUE(maps) || isFALSE(maps))
-  if (isFALSE(FC)) { FC <- "none" }
-  FC <- match.arg(FC, c("emp", "IW", "Chol", "none"))
   var_method <- match.arg(var_method, c("non-negative", "unbiased"))
+  FC_method <- match.arg(FC_method, c("emp", "IW", "Chol", "none"))
 
   # Check `...`
   args <- list(...)
   has_title <- "title" %in% names(args)
   has_idx <- "idx" %in% names(args)
   has_fname <- "fname" %in% names(args)
+  has_labs <- "y_labs" %in% names(args)
 
   # Print message saying what's happening.
-  msg1 <- ifelse(has_idx,
+  msg1 <- ifelse(has_idx || what=="FC",
     "Plotting the",
-    "Plotting the first component's"
+    "Plotting the first network's"
   )
   msg2 <- switch(stat,
-    mean="mean prior.",
-    sd="sqrt(variance) prior.",
-    var="variance prior."
+    mean="mean",
+    sd="sqrt(variance)",
+    var="variance"
   )
-  cat(msg1, msg2, "\n")
+  msg3 <- switch(what,
+    maps="spatial map",
+    FC="FC"
+  )
+  cat(msg1, msg2, msg3, "prior.\n")
 
   # Plot
-  out <- list()
+  if (what == "FC" && is.null(x$prior$FC)) {
+    stop("`what=='FC'` but there's no FC prior.")
+  }
 
-  for (plt in c("map", "FC")) {
-    if (plt == "map" && !maps) { next }
-    if (plt == "FC" && is.null(x$prior$FC)) { next }
-    if (plt == "FC" && FC=="none") { next }
+  ss <- stat
+  ss2 <- ss
+  if (what == "FC") { ss2 <- paste0(ss2, "_FC") }
+  ssname <- if (ss == "mean") {
+    ss
+  } else if (what == "FC") {
+    "varNN"
+  } else if (var_method=="non-negative") {
+    "varNN"
+  } else {
+    "varUB"
+  }
 
-    ss <- stat
-    ss2 <- ss
-    if (plt == "FC") { ss2 <- paste0(ss2, "_FC") }
-    ssname <- if (ss == "mean") {
-      ss
-    } else if (plt == "FC") {
-      "varNN"
-    } else if (var_method=="non-negative") {
-      "varNN"
-    } else {
-      "varUB"
-    }
+  dat <- if (what == "maps") {
+    x$prior[[ssname]]
+  } else if (FC_method == "emp") {
+    x$prior$FC[[switch(
+      ssname, mean="mean_empirical", varNN="var_empirical", varUB=stop())]]
+  } else if (FC_method == "IW") {
+    stop("Not implemented.")
+  } else if (FC_method == "Chol") {
+    x$prior$FC_Chol[[switch(
+      ssname, mean="FC_samp_mean", varNN="FC_samp_var", varUB=stop())]]
+  }
 
-    dat <- if (plt == "map") {
-      x$prior[[ssname]]
-    } else if (FC == "emp") {
-      x$prior$FC[[switch(
-        ssname, mean="mean_empirical", varNN="var_empirical", varUB=stop())]]
-    } else if (FC == "IW") {
-      stop("Not implemented.")
-    } else if (FC == "Chol") {
-      x$prior$FC_Chol[[switch(
-        ssname, mean="FC_samp_mean", varNN="FC_samp_var", varUB=stop())]]
-    }
+  if (ss=="var" && var_method=="unbiased") { dat[] <- pmax(0, dat) }
+  if (ss=="sd") {
+    dat <- sqrt(dat)
+    ssname <- paste0("sqrt ", ssname)
+  }
 
-    if (ss=="var" && var_method=="unbiased") { dat[] <- pmax(0, dat) }
-    if (ss=="sd") {
-      dat <- sqrt(dat)
-      ssname <- paste0("sqrt ", ssname)
-    }
+  if (what == "maps") {
+    tss <- struct_prior(
+      dat, "CIFTI", x$mask_input, x$params, x$dat_struct, x$template_parc_table)
+  }
 
-    if (plt == "map") {
-      tss <- struct_prior(
-        dat, "CIFTI", x$mask_input, x$params, x$dat_struct, x$template_parc_table)
-    }
-
-    args_ss <- args
-    # Handle title and idx
-    ### No title: use the component names if available, and the indices if not.
+  args_ss <- args
+  # Handle title and idx
+  if (what == "maps") {
+    ### No title: use the network names if available, and the indices if not.
     if (!has_title && !has_idx) {
       args_ss$title <- if (!is.null(x$dat_struct$meta$cifti$names)) {
         x$dat_struct$meta$cifti$names[1]
       } else {
-        "First component"
+        "First network"
       }
     } else if (!has_title) {
       args_ss$title <- if (!is.null(x$dat_struct$meta$cifti$names)) {
         x$dat_struct$meta$cifti$names[args$idx]
       } else {
-        paste("Component", args$idx)
+        paste("Network", args$idx)
+      }
+    }
+    ### Append the statistic name.
+    args_ss$title <- paste0(args_ss$title, " (", ssname, ")")
+  } else {
+    if (has_title) {
+      ### Append the statistic name.
+      args_ss$title <- paste0(args_ss$title, " (", ssname, ")")
+    }
+  }
+  # Handle fname
+  if (has_fname) {
+    fext <- if (grepl("html$", args_ss$fname[1])) {
+      "html"
+    } else if (grepl("pdf$", args_ss$fname[1])) {
+      "pdf"
+    } else {
+      "png"
+    }
+    args_ss$fname <- gsub(paste0(".", fext), "", args_ss$fname, fixed=TRUE)
+    args_ss$fname <- paste0(args_ss$fname, "_", ss, ".", fext)
+  }
+
+  if (what == "maps") {
+    out <- do.call(
+      ciftiTools::view_xifti, c(list(tss), args_ss)
+    )
+    if (inherits(out, "htmlwidget")) { print(out) }
+  } else if (what == "FC") {
+    if (!has_labs) {
+      net_names <- if (!is.null(x$template_parc_table)) {
+        rownames(x$template_parc_table)
+      } else {
+        x$params$inds
+      }
+      args_ss$y_labs <- net_names
+    }
+    if (!("diagVal" %in% names(args_ss)) && stat!="mean") { args_ss$diagVal <- 0 }
+    out <- do.call(
+      fMRItools::plot_FC_gg, c(list(dat), args_ss)
+    )
+    print(out)
+  } else { stop() }
+
+  invisible(out)
+}
+
+#' Plot prior
+#'
+#' @param x The prior from \code{estimate_prior.gifti}
+#' @param what The \code{"maps"} (default) on the brain, or the \code{"FC"} 
+#'  matrix. If both are desired, use two separate \code{plot} calls to first
+#'  plot the maps and then plot the FC.
+#' @param stat Which prior statistic to plot: the \code{"mean"} (default),
+#'  \code{"sd"} for the square root of the variance template, or \code{"var"}
+#'  for the variance template.
+#' @param var_method \code{"non-negative"} (default) or \code{"unbiased"}, for
+#'  the variance estimate of the maps. Note that FC variance estimates are
+#'  always non-negative.
+#' @param FC_method If \code{what=="FC"}: empirical (\code{"emp"}) (default), 
+#'  Inverse-Wishart (\code{"IW"}), or Cholesky (\code{"Chol"}).
+#' @param ... Additional arguments to \code{view_xifti} if \code{what=="maps"},
+#'  or \code{\link[fMRItools]{plot_FC_gg}} if \code{what=="FC"}.
+#' @return The plot
+#' @export
+#' @method plot prior.gifti
+plot.prior.gifti <- function(x,
+  what=c("maps", "FC"),
+  stat=c("mean", "sd", "var"),
+  var_method=c("non-negative", "unbiased"), 
+  FC_method=c("emp", "IW", "Chol", "none"),
+  ...) {
+
+  stopifnot(inherits(x, "prior.gifti"))
+
+  if (x$dat_struct$hemisphere == "left")  {
+    y <- ciftiTools::as_cifti(cortexL=x$prior$mean[,1,drop=FALSE] * 0)
+  } else {
+    y <- ciftiTools::as_cifti(cortexR=x$prior$mean[,1,drop=FALSE] * 0)
+  }
+  y <- ciftiTools::move_from_mwall(y)
+  x$dat_struct <- y; class(x) <- "prior.cifti"
+
+  plot.prior.cifti(x, 
+    what=what, stat=stat, FC_method=FC_method, var_method=var_method, 
+    ...
+  )
+}
+
+#' Plot prior
+#'
+#' Based on \code{oro.nifti::image}.
+#'
+#' Consider using \code{struct_prior} to obtain the 3D volumes to plot with a different
+#'  viewer function (e.g. from \code{oro.nifti}) if desired.
+#'
+#' @param x The prior from \code{estimate_prior.nifti}
+#' @param what The \code{"maps"} (default) on the brain, or the \code{"FC"} 
+#'  matrix. If both are desired, use two separate \code{plot} calls to first
+#'  plot the maps and then plot the FC.
+#' @param stat Which prior statistic to plot: the \code{"mean"} (default),
+#'  \code{"sd"} for the square root of the variance template, or \code{"var"}
+#'  for the variance template.
+#' @param var_method \code{"non-negative"} (default) or \code{"unbiased"}, for
+#'  the variance estimate of the maps. Note that FC variance estimates are
+#'  always non-negative.
+#' @param FC_method If \code{what=="FC"}: empirical (\code{"emp"}) (default), 
+#'  Inverse-Wishart (\code{"IW"}), or Cholesky (\code{"Chol"}).
+#' @param plane,n_slices,slices Anatomical plane and which slice indices to
+#'  show.
+#'  Default: 9 axial slices.
+#' @param ... Additional arguments to \code{oro.nifti::image} 
+#'  if \code{what=="maps"}, or \code{\link[fMRItools]{plot_FC_gg}} if 
+#'  \code{what=="FC"}.
+#' @return The plot
+#' @export
+#' @method plot prior.nifti
+plot.prior.nifti <- function(x, 
+  what=c("maps", "FC"),
+  stat=c("mean", "sd", "var"),
+  FC_method=c("emp", "IW", "Chol", "none"),
+  var_method=c("non-negative", "unbiased"), 
+  plane=c("axial", "sagittal", "coronal"), n_slices=9, slices=NULL,
+  ...) {
+
+  stopifnot(inherits(x, "prior.nifti"))
+
+  if (!requireNamespace("oro.nifti", quietly = TRUE)) {
+    stop("Package \"oro.nifti\" needed to read NIFTI data. Please install it.", call. = FALSE)
+  }
+
+  what <- match.arg(what, c("maps", "FC"))
+  stat <- match.arg(stat, c("mean", "sd", "var"))
+  var_method <- match.arg(var_method, c("non-negative", "unbiased"))
+  FC_method <- match.arg(FC_method, c("emp", "IW", "Chol", "none"))
+
+  # Check `...`
+  args <- list(...)
+  has_title <- "title" %in% names(args)
+  has_idx <- "idx" %in% names(args)
+  has_fname <- "fname" %in% names(args)
+  has_labs <- "y_labs" %in% names(args)
+
+  # Check `idx`
+  if (has_idx) {
+    stopifnot(length(args$idx)==1)
+    stopifnot(is.numeric(args$idx) && args$idx==round(args$idx))
+    stopifnot(args$idx %in% seq(ncol(x$prior$mean)))
+  } else {
+    args$idx <- 1
+  }
+  idx <- args$idx; args$idx <- NULL
+
+  # Print message saying what's happening.
+  msg1 <- ifelse(has_idx || what=="FC",
+    "Plotting the",
+    "Plotting the first network's"
+  )
+  msg2 <- switch(stat,
+    mean="mean",
+    sd="sqrt(variance)",
+    var="variance"
+  )
+  msg3 <- switch(what,
+    maps="spatial map",
+    FC="FC"
+  )
+  cat(msg1, msg2, msg3, "prior.\n")
+
+  # Plot
+  if (what == "FC" && is.null(x$prior$FC)) {
+    stop("`what=='FC'` but there's no FC prior.")
+  }
+
+  ss <- stat
+  ss2 <- ss
+  if (what == "FC") { ss2 <- paste0(ss2, "_FC") }
+  ssname <- if (ss == "mean") {
+    ss
+  } else if (what == "FC") {
+    "varNN"
+  } else if (var_method=="non-negative") {
+    "varNN"
+  } else {
+    "varUB"
+  }
+
+  if (what == "maps") {
+    plane <- match.arg(plane, c("axial", "sagittal", "coronal"))
+    args$plane <- plane
+    plane_dim <- switch(plane, axial=3, coronal=2, sagittal=1)
+    if (is.null(slices)) {
+      if (is.null(n_slices)) { warning("Using 9 slices."); n_slices <- 9 }
+      n_slices <- as.numeric(n_slices)
+      if (length(n_slices) > 1) { warning("Using the first entry of `slice`."); n_slices <- n_slices[1] }
+      # Pick slices that are spaced out, and with many voxels.
+      mask_count <- apply(x$mask_input, plane_dim, sum)
+      ns_all <- length(mask_count)
+      slices <- seq(ns_all)
+      # Remove slices with zero voxels.
+      slices <- slices[mask_count != 0]
+      mask_count <- mask_count[mask_count != 0]
+      ns_all <- length(mask_count)
+      if (n_slices > length(slices)) {
+        warning(
+          "`n_slices` is larger than the number of non-empty slices (",
+          length(slices), "). Showing all non-empty slices."
+        )
+        n_slices <- length(slices)
+      }
+      # Remove slices with few voxels.
+      if (n_slices < (ns_all / 2)) {
+        slices <- slices[mask_count > quantile(mask_count, .33)]
+      }
+      slices <- slices[round(seq(1, length(slices), length.out=n_slices))]
+    } else {
+      slices <- as.numeric(slices)
+      stopifnot(all(slices %in% seq(dim(x$mask_input)[plane_dim])))
+    }
+  }
+
+  dat <- if (what == "maps") {
+    x$prior[[ssname]]
+  } else if (FC_method == "emp") {
+    x$prior$FC[[switch(
+      ssname, mean="mean_empirical", varNN="var_empirical", varUB=stop())]]
+  } else if (FC_method == "IW") {
+    stop("Not implemented.")
+  } else if (FC_method == "Chol") {
+    x$prior$FC_Chol[[switch(
+      ssname, mean="FC_samp_mean", varNN="FC_samp_var", varUB=stop())]]
+  }
+
+  if (ss=="var" && var_method=="unbiased") { dat[] <- pmax(0, dat) }
+  if (stat=="sd") {
+    dat <- sqrt(dat)
+    ssname <- paste0("sqrt ", ssname)
+  }
+
+  if (what == "maps") {
+    tss <- struct_prior(dat, "NIFTI", x$mask_input, x$params, x$dat_struct, x$template_parc_table)
+    tss <- tss[,,,idx]
+
+    if (plane=="axial") {
+      tss <- tss[,,slices,drop=FALSE]
+    } else if (plane=="coronal") {
+      tss <- tss[,slices,,drop=FALSE]
+    } else if (plane=="sagittal") {
+      tss <- tss[slices,,,drop=FALSE]
+    } else { stop() }
+  }
+
+  args_ss <- args
+  if (what == "maps") {
+    args_ss$plane <- plane
+    if (has_title) { stop("Not supported yet.") }
+    if (has_fname) { stop("Not supported yet. Call `pdf` or `png` beforehand, and then `dev.off`.") }
+    out <- do.call(
+      oro.nifti::image,
+      c(list(oro.nifti::as.nifti(tss)), args_ss)
+    )
+
+  } else if (what == "FC") {
+    # Handle title and idx
+    ### No title: use the network names if available, and the indices if not.
+    if (!has_title && !has_idx) {
+      args_ss$title <- if (!is.null(x$dat_struct$meta$cifti$names)) {
+        x$dat_struct$meta$cifti$names[1]
+      } else {
+        "First network"
+      }
+    } else if (!has_title) {
+      args_ss$title <- if (!is.null(x$dat_struct$meta$cifti$names)) {
+        x$dat_struct$meta$cifti$names[args$idx]
+      } else {
+        paste("Network", args$idx)
       }
     }
     ### Append the statistic name.
@@ -440,196 +720,22 @@ plot.prior.cifti <- function(x,
       args_ss$fname <- paste0(args_ss$fname, "_", ss, ".", fext)
     }
 
-    if (plt == "map") {
-      out[[paste0(ss, "_map")]] <- do.call(
-        ciftiTools::view_xifti, c(list(tss), args_ss)
-      )
-    } else if (plt == "FC") {
-      net_names <- if (isFALSE(FC_labs)) {
-        NULL
-      } else if(is.null(FC_labs)) {
-        if (!is.null(x$template_parc_table)) {
-          rownames(x$template_parc_table)
-        } else {
-          x$params$inds
-        }
+    if (!has_labs) {
+      net_names <- if (!is.null(x$template_parc_table)) {
+        rownames(x$template_parc_table)
       } else {
-        FC_labs
+        x$params$inds
       }
-      out[[paste0(ss, "_FC")]]  <- fMRItools::plot_FC_gg(
-        dat, title=paste("FC", ssname), diagVal=NULL, y_labs = net_names
-      )
-      print(out[[paste0(ss, "_FC")]])
+      args_ss$y_labs <- net_names
     }
-  }
-
-  invisible(out)
-}
-
-#' Plot prior
-#'
-#' @param x The prior from \code{estimate_prior.gifti}
-#' @param stat \code{"mean"}, \code{"sd"}, or \code{"both"} (default). By
-#'  default the square root of the variance prior is shown; another option is
-#'  \code{stat="var"} to instead display the variance prior directly.
-#' @param var_method \code{"non-negative"} (default) or \code{"unbiased"}
-#' @param ... Additional arguments to \code{view_xifti}
-#' @return The plot
-#' @export
-#' @method plot prior.gifti
-plot.prior.gifti <- function(x, stat=c("both", "mean", "sd", "var"),
-  var_method=c("non-negative", "unbiased"), ...) {
-  stopifnot(inherits(x, "prior.gifti"))
-
-  if (!requireNamespace("ciftiTools", quietly = TRUE)) {
-    stop("Package \"ciftiTools\" needed to read NIFTI data. Please install it.", call. = FALSE)
-  }
-
-  if (x$dat_struct$hemisphere == "left")  {
-    y <- ciftiTools::as_cifti(cortexL=x$prior$mean[,1,drop=FALSE] * 0)
-  } else {
-    y <- ciftiTools::as_cifti(cortexR=x$prior$mean[,1,drop=FALSE] * 0)
-  }
-  y <- ciftiTools::move_from_mwall(y)
-  x$dat_struct <- y; class(x) <- "prior.cifti"
-  plot.prior.cifti(x, stat, var_method, ...)
-}
-
-#' Plot prior
-#'
-#' Based on \code{oro.nifti::image}.
-#'
-#' Consider using \code{struct_prior} to obtain the 3D volumes to plot with a different
-#'  viewer function (e.g. from \code{oro.nifti}) if desired.
-#'
-#' @param x The prior from \code{estimate_prior.nifti}
-#' @param stat \code{"mean"} (default), \code{"sd"}, or \code{"var"}.
-#'  (\code{"sd"} will show the square root of the variance prior.)
-#' @param var_method \code{"non-negative"} (default) or \code{"unbiased"}
-#' @param plane,n_slices,slices Anatomical plane and which slice indices to
-#'  show.
-#'  Default: 9 axial slices.
-#' @param ... Additional arguments to \code{oro.nifti::image}
-#' @return The plot
-#' @export
-#' @method plot prior.nifti
-plot.prior.nifti <- function(x, stat=c("mean", "sd", "var"),
-  plane=c("axial", "sagittal", "coronal"), n_slices=9, slices=NULL,
-  var_method=c("non-negative", "unbiased"), ...) {
-  stopifnot(inherits(x, "prior.nifti"))
-
-  if (!requireNamespace("oro.nifti", quietly = TRUE)) {
-    stop("Package \"oro.nifti\" needed to read NIFTI data. Please install it.", call. = FALSE)
-  }
-
-  var_method <- match.arg(var_method, c("non-negative", "unbiased"))
-
-  # Check `...`
-  args <- list(...)
-  has_title <- "title" %in% names(args)
-  has_idx <- "idx" %in% names(args)
-  has_fname <- "fname" %in% names(args)
-
-  # Check `idx`
-  if (has_idx) {
-    stopifnot(length(args$idx)==1)
-    stopifnot(is.numeric(args$idx) && args$idx==round(args$idx))
-    stopifnot(args$idx %in% seq(ncol(x$prior$mean)))
-  } else {
-    args$idx <- 1
-  }
-  idx <- args$idx; args$idx <- NULL
-
-  # Check `stat`
-  stat <- tolower(stat)
-  if (has_idx && length(args$idx)>1 && !("fname" %in% names(args)) && identical(stat, c("mean", "sd", "var"))) {
-    stat <- "mean"
-  }
-  stat <- match.arg(stat, c("mean", "sd", "var"))
-
-  # Print message saying what's happening.
-  msg1 <- ifelse(has_idx,
-    "Plotting the",
-    "Plotting the first component's"
-  )
-  msg2 <- switch(stat,
-    mean="mean prior.",
-    sd="sqrt(variance) prior.",
-    var="variance prior."
-  )
-  cat(msg1, msg2, "\n")
-
-  # Plot
-  out <- list(mean=NULL, var=NULL)
-
-  plane <- match.arg(plane, c("axial", "sagittal", "coronal"))
-  args$plane <- plane
-  plane_dim <- switch(plane, axial=3, coronal=2, sagittal=1)
-  if (is.null(slices)) {
-    if (is.null(n_slices)) { warning("Using 9 slices."); n_slices <- 9 }
-    n_slices <- as.numeric(n_slices)
-    if (length(n_slices) > 1) { warning("Using the first entry of `slice`."); n_slices <- n_slices[1] }
-    # Pick slices that are spaced out, and with many voxels.
-    mask_count <- apply(x$mask_input, plane_dim, sum)
-    ns_all <- length(mask_count)
-    slices <- seq(ns_all)
-    # Remove slices with zero voxels.
-    slices <- slices[mask_count != 0]
-    mask_count <- mask_count[mask_count != 0]
-    ns_all <- length(mask_count)
-    if (n_slices > length(slices)) {
-      warning(
-        "`n_slices` is larger than the number of non-empty slices (",
-        length(slices), "). Showing all non-empty slices."
-      )
-      n_slices <- length(slices)
-    }
-    # Remove slices with few voxels.
-    if (n_slices < (ns_all / 2)) {
-      slices <- slices[mask_count > quantile(mask_count, .33)]
-    }
-    slices <- slices[round(seq(1, length(slices), length.out=n_slices))]
-  } else {
-    slices <- as.numeric(slices)
-    stopifnot(all(slices %in% seq(dim(x$mask_input)[plane_dim])))
-  }
-
-  ssname <- if (stat == "mean") {
-    stat
-  } else if (var_method=="non-negative") {
-    "varNN"
-  } else {
-    "varUB"
-  }
-  if (stat=="var" && var_method=="unbiased") { x$prior[[ssname]][] <- pmax(0, x$prior[[ssname]]) }
-  tss <- struct_prior(x$prior[[ssname]], "NIFTI", x$mask_input, x$params, x$dat_struct, x$template_parc_table)
-  tss <- tss[,,,idx]
-
-  if (plane=="axial") {
-    tss <- tss[,,slices,drop=FALSE]
-  } else if (plane=="coronal") {
-    tss <- tss[,slices,,drop=FALSE]
-  } else if (plane=="sagittal") {
-    tss <- tss[slices,,,drop=FALSE]
+    if (!("diagVal" %in% names(args_ss)) && stat!="mean") { args_ss$diagVal <- 0 }
+    out <- do.call(
+      fMRItools::plot_FC_gg, c(list(dat), args_ss)
+    )
+    print(out)
   } else { stop() }
 
-  if (stat=="sd") {
-    tss <- sqrt(tss)
-    ssname <- paste0("sqrt ", ssname)
-  }
-
-  args_ss <- args
-  args_ss$plane <- plane
-  # Handle title and idx
-  if (!has_title && !has_idx) {
-    c1name <- "First component"
-  }
-  if (has_title) { stop("Not supported yet.") }
-  if (has_fname) { stop("Not supported yet. Call `pdf` or `png` beforehand, and then `dev.off`.") }
-  do.call(
-    oro.nifti::image,
-    c(list(oro.nifti::as.nifti(tss)), args_ss)
-  )
+  invisible(out)
 }
 
 #' Plot prior

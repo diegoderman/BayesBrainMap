@@ -203,118 +203,125 @@ print.bMap.matrix <- function(x, ...) {
 #' Plot BrainMap estiamte
 #'
 #' @param x The result of \code{BrainMap} with CIFTI data
-#' @param stat \code{"mean"} (default) or \code{"se"}.
-#' @param maps Show the BrianMap estimates on the brain? Default: \code{TRUE}.
-#' @param FC Show the FC estimates? Default: \code{TRUE}. Note that only the
-#'  mean estimate is available for FC, not the SE.
-#' @param FC_labs Labels for each network on the FC plot. If \code{NULL}, the
-#'  network indices or names will be used. Set to \code{FALSE} to not add labels.
-#' @param ... Additional arguments to \code{view_xifti}
+#' @param what The \code{"maps"} (default) on the brain, or the \code{"FC"} 
+#'  matrix. If both are desired, use two separate \code{plot} calls to first
+#'  plot the maps and then plot the FC.
+#' @param stat \code{"mean"} (default) or \code{"se"}. Note that for the FC,
+#'  only the mean estimate is available, not the SE.
+#' @param ... Additional arguments to \code{\link[ciftiTools]{view_xifti}} 
+#'  if \code{what=="maps"}, or \code{\link[fMRItools]{plot_FC_gg}} if 
+#'  \code{what=="FC"}.
 #' @return The plot
 #' @export
 #' @method plot bMap.cifti
 plot.bMap.cifti <- function(x,
+  what=c("maps", "FC"),
   stat=c("mean", "se"),
-  maps=TRUE,
-  FC=TRUE,
-  FC_labs=NULL,
   ...) {
+  
   stopifnot(inherits(x, "bMap.cifti"))
 
   if (!requireNamespace("ciftiTools", quietly = TRUE)) {
     stop("Package \"ciftiTools\" needed to work with CIFTI data. Please install it.", call. = FALSE)
   }
 
+  what <- match.arg(what, c("maps", "FC"))
   stat <- match.arg(stat, c("mean", "se"))
-  stopifnot(isTRUE(maps) || isFALSE(maps))
-  stopifnot(isTRUE(FC) || isFALSE(FC))
-  if (!maps && !FC) { return(invisible(NULL)) }
-  if (stat=="se" && !maps) {
-    message("No FC SE, and maps==FALSE, so nothing to plot.")
-    return(invisible(NULL))
+  if (stat=="se" && what=="FC") {
+    stop("SE for FC is not available.")
   }
-
 
   # Check `...`
   args <- list(...)
   has_title <- "title" %in% names(args)
   has_idx <- "idx" %in% names(args)
   has_fname <- "fname" %in% names(args)
+  has_labs <- "y_labs" %in% names(args)
 
   # Print message saying what's happening.
-  msg1 <- ifelse(has_idx,
+  msg1 <- ifelse(has_idx || what=="FC",
     "Plotting the",
-    "Plotting the first component's"
+    "Plotting the first network's"
   )
   msg2 <- switch(stat,
-    mean=if (FC) { "mean estimate of the maps and FC." } else { "mean estimate of the maps." },
-    se="standard error of the maps."
+    mean="mean estimate of the",
+    se="standard error of the"
   )
-  cat(msg1, msg2, "\n")
+  msg3 <- switch(what,
+    maps="spatial map",
+    FC="FC"
+  )
+  cat(msg1, msg2, paste0(msg3, ".\n"))
 
   # Plot
-  out <- list()
+  if (what == "FC" && is.null(x$FC)) {
+    stop("`what=='FC'` but there's no FC prior.")
+  }
 
-  for (plt in c("map" , "FC")) {
-    if (plt == "map" && !maps) { next }
-    if (plt == "FC" && is.null(x$FC)) { next }
-    if (plt == "FC" && !FC) { next }
-    if (plt == "FC" && stat=="se") { next }
+  ss <- stat
+  ss2 <- ss
+  if (what == "FC") { ss2 <- paste0(ss2, "_FC") }
 
-    ss <- stat
-    args_ss <- args
-    tsfx_ss <- c(mean="", se=" (se)")[ss]
-    # Handle title and idx
+  args_ss <- args
+  tsfx_ss <- switch(ss, mean="", se=" (se)")
+  # Handle title and idx
+  if (what == "maps") {
+    ### No title: use the network names if available, and the indices if not.
     if (!has_title) {
       if (has_idx) {
         c1name <- if (!is.null(x$subjNet_mean$meta$cifti$names)) {
           x$subjNet_mean$meta$cifti$names[args$idx]
         } else {
-          paste("Component", args$idx)
+          paste("Network", args$idx)
         }
       } else {
         c1name <- if (!is.null(x$subjNet_mean$meta$cifti$names)) {
           x$subjNet_mean$meta$cifti$names[1]
         } else {
-          "First component"
+          "First network"
         }
       }
       args_ss$title <- paste0(c1name, tsfx_ss)
     } else if (!has_idx) {
       args_ss$title <- paste0(args_ss$title, tsfx_ss)
     }
-    # Handle fname
-    if (has_fname) {
-      fext <- if (grepl("html$", args_ss$fname[1])) {
-        "html"
-      } else if (grepl("pdf$", args_ss$fname[1])) {
-        "pdf"
-      } else {
-        "png"
-      }
-      args_ss$fname <- gsub(paste0(".", fext), "", args_ss$fname, fixed=TRUE)
-      args_ss$fname <- paste0(args_ss$fname, "_", ss, ".", fext)
-    }
-
-    if (plt == "map") {
-      out[[paste0(ss, "_map")]] <- do.call(
-        ciftiTools::view_xifti, c(list(x[[paste0("subjNet_", ss)]]), args_ss)
-      )
-      if (inherits(out[[paste0(ss, "_map")]], "htmlwidget")) { print(out[[paste0(ss, "_map")]]) }
-    } else if (plt == "FC") {
-      net_names <- if (isFALSE(FC_labs)) {
-        NULL
-      } else if(is.null(FC_labs)) {
-        x$subjNet_mean$meta$cifti$names
-      } else {
-        FC_labs
-      }
-      out[[paste0(ss, "_FC")]]  <- fMRItools::plot_FC_gg(
-        x$FC$mean, title="FC mean", diagVal=NULL, y_labs = net_names
-      )
-      print(out[[paste0(ss, "_FC")]])
+  } else {
+    if (has_title) {
+      args_ss$title <- paste0(args_ss$title, tsfx_ss)
+    } else {
+      args_ss$title <- "FC mean"
     }
   }
+
+  # Handle fname
+  if (has_fname) {
+    fext <- if (grepl("html$", args_ss$fname[1])) {
+      "html"
+    } else if (grepl("pdf$", args_ss$fname[1])) {
+      "pdf"
+    } else {
+      "png"
+    }
+    args_ss$fname <- gsub(paste0(".", fext), "", args_ss$fname, fixed=TRUE)
+    args_ss$fname <- paste0(args_ss$fname, "_", ss, ".", fext)
+  }
+
+  if (what == "maps") {
+    out <- do.call(
+      ciftiTools::view_xifti, c(list(x[[paste0("subjNet_", ss)]]), args_ss)
+    )
+    if (inherits(out, "htmlwidget")) { print(out) }
+  } else if (what == "FC") {
+    if (!has_labs) {
+      net_names <- x$subjNet_mean$meta$cifti$names
+      args_ss$y_labs <- net_names
+    }
+    if (!("diagVal" %in% names(args_ss)) && stat!="mean") { args_ss$diagVal <- 0 }
+    out <- do.call(
+      fMRItools::plot_FC_gg, c(list(x$FC$mean), args_ss)
+    )
+    print(out)
+  } else { stop() }
 
   invisible(out)
 }
@@ -368,7 +375,7 @@ plot.bMap.nifti <- function(x, stat=c("mean", "se"),
   # Print message saying what's happening.
   msg1 <- ifelse(has_idx,
     "Plotting the",
-    "Plotting the first component's"
+    "Plotting the first network's"
   )
   msg2 <- switch(stat,
     mean="estimate.",
@@ -427,7 +434,7 @@ plot.bMap.nifti <- function(x, stat=c("mean", "se"),
   args_ss$plane <- plane
   # Handle title and idx
   if (!has_title && !has_idx) {
-    c1name <- "First component"
+    c1name <- "First network"
   }
   if (has_title) { stop("Not supported yet.") }
   if (has_fname) { stop("Not supported yet. Call `pdf` or `png` beforehand, and then `dev.off`.") }

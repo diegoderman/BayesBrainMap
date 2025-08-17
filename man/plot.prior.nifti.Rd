@@ -6,27 +6,41 @@
 \usage{
 \method{plot}{prior.nifti}(
   x,
+  what = c("maps", "FC"),
   stat = c("mean", "sd", "var"),
+  FC_method = c("emp", "IW", "Chol", "none"),
+  var_method = c("non-negative", "unbiased"),
   plane = c("axial", "sagittal", "coronal"),
   n_slices = 9,
   slices = NULL,
-  var_method = c("non-negative", "unbiased"),
   ...
 )
 }
 \arguments{
 \item{x}{The prior from \code{estimate_prior.nifti}}
 
-\item{stat}{\code{"mean"} (default), \code{"sd"}, or \code{"var"}.
-(\code{"sd"} will show the square root of the variance prior.)}
+\item{what}{The \code{"maps"} (default) on the brain, or the \code{"FC"}
+matrix. If both are desired, use two separate \code{plot} calls to first
+plot the maps and then plot the FC.}
+
+\item{stat}{Which prior statistic to plot: the \code{"mean"} (default),
+\code{"sd"} for the square root of the variance template, or \code{"var"}
+for the variance template.}
+
+\item{FC_method}{If \code{what=="FC"}: empirical (\code{"emp"}) (default),
+Inverse-Wishart (\code{"IW"}), or Cholesky (\code{"Chol"}).}
+
+\item{var_method}{\code{"non-negative"} (default) or \code{"unbiased"}, for
+the variance estimate of the maps. Note that FC variance estimates are
+always non-negative.}
 
 \item{plane, n_slices, slices}{Anatomical plane and which slice indices to
 show.
 Default: 9 axial slices.}
 
-\item{var_method}{\code{"non-negative"} (default) or \code{"unbiased"}}
-
-\item{...}{Additional arguments to \code{oro.nifti::image}}
+\item{...}{Additional arguments to \code{oro.nifti::image}
+if \code{what=="maps"}, or \code{\link[fMRItools]{plot_FC_gg}} if
+\code{what=="FC"}.}
 }
 \value{
 The plot

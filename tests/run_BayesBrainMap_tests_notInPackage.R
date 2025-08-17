@@ -356,8 +356,9 @@ RNifti::writeNifti(nmask, mask_fname)
 
 # mask erosion?
 tm <- estimate_prior(
-  nii_fnames[seq(4)], template=ngIC_fname, #scale=FALSE,
-  mask=mask_fname, varTol = 500, maskTol=.3, missingTol=.9
+  nii_fnames[seq(4)], template=ngIC_fname, FC=TRUE, #scale=FALSE,
+  mask=mask_fname, varTol = 500, maskTol=.3, missingTol=.9,
+  FC_nPivots=4, FC_nSamp=100
 )
 tm
 bMap <- BrainMap(

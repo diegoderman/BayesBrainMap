@@ -6,21 +6,33 @@
 \usage{
 \method{plot}{prior.gifti}(
   x,
-  stat = c("both", "mean", "sd", "var"),
+  what = c("maps", "FC"),
+  stat = c("mean", "sd", "var"),
   var_method = c("non-negative", "unbiased"),
+  FC_method = c("emp", "IW", "Chol", "none"),
   ...
 )
 }
 \arguments{
 \item{x}{The prior from \code{estimate_prior.gifti}}
 
-\item{stat}{\code{"mean"}, \code{"sd"}, or \code{"both"} (default). By
-default the square root of the variance prior is shown; another option is
-\code{stat="var"} to instead display the variance prior directly.}
+\item{what}{The \code{"maps"} (default) on the brain, or the \code{"FC"}
+matrix. If both are desired, use two separate \code{plot} calls to first
+plot the maps and then plot the FC.}
 
-\item{var_method}{\code{"non-negative"} (default) or \code{"unbiased"}}
+\item{stat}{Which prior statistic to plot: the \code{"mean"} (default),
+\code{"sd"} for the square root of the variance template, or \code{"var"}
+for the variance template.}
 
-\item{...}{Additional arguments to \code{view_xifti}}
+\item{var_method}{\code{"non-negative"} (default) or \code{"unbiased"}, for
+the variance estimate of the maps. Note that FC variance estimates are
+always non-negative.}
+
+\item{FC_method}{If \code{what=="FC"}: empirical (\code{"emp"}) (default),
+Inverse-Wishart (\code{"IW"}), or Cholesky (\code{"Chol"}).}
+
+\item{...}{Additional arguments to \code{view_xifti} if \code{what=="maps"},
+or \code{\link[fMRItools]{plot_FC_gg}} if \code{what=="FC"}.}
 }
 \value{
 The plot
