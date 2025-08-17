@@ -165,7 +165,7 @@ plot.bMap_eng.cifti <- function(
     )
   } else {
     x$engaged <- ciftiTools::move_to_mwall(x$engaged, -1)
-    x$engaged <- convert_xifti(x$engaged, "dscalar")
+    x$engaged <- ciftiTools::convert_xifti(x$engaged, "dscalar")
     x <- ciftiTools::newdata_xifti(x$engaged, x[[stat]][,,test_level])
   }
 
