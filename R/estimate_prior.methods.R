@@ -476,9 +476,13 @@ plot.prior.cifti <- function(x,
         if (!requireNamespace("grDevices", quietly = TRUE)) {
         stop("Package \"grDevices\" needed to read NIFTI data. Please install it.", call. = FALSE)
       }
-      gvals <- grDevices::hcl.colors(3, palette="Blue-Red2")
+      #gvals <- grDevices::hcl.colors(3, palette="Blue-Red2")
+      gvals <- c(
+        "#5d0928", "#892041", "#b63b59", "#d26767", "#eb8e74", "#f4b794", "#fcdcba",
+        "#fffee6", 
+        "#c7e7d8", "#99cbcf", "#68aec6", "#478db7", "#226ca7", "#1b4984", "#132560")
       args_ss$colFUN <- function(limits=c(-1,1), ...){
-        ggplot2::scale_fill_gradient2(low=gvals[1], mid=gvals[2], high=gvals[3], limits=limits, ...)
+        ggplot2::scale_fill_gradientn(colours=gvals, limits=limits, ...)
       }
     }
     out <- do.call(
