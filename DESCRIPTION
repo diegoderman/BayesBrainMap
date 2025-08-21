@@ -55,6 +55,7 @@ Suggests:
     RNifti,
     oro.nifti,
     gifti,
+    ggplot2,
     parallel,
     doParallel,
     knitr,
