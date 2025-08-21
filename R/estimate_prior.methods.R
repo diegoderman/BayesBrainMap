@@ -311,14 +311,14 @@ print.prior.matrix <- function(x, ...) {
 }
 
 #' Plot prior
-#' 
+#'
 #' @param x The prior from \code{estimate_prior.cifti}
-#' @param what The \code{"maps"} (default) on the brain, or the \code{"FC"} 
+#' @param what The \code{"maps"} (default) on the brain, or the \code{"FC"}
 #'  matrix. If both are desired, use two separate \code{plot} calls to first
 #'  plot the maps and then plot the FC.
-#' 
+#'
 #'  If \code{"FC"}, the default color scale will be from blue (-1) to red (1).
-#'  This can be changed with the \code{colFUN} argument to 
+#'  This can be changed with the \code{colFUN} argument to
 #'  \code{\link[fMRItools]{plot_FC_gg}}.
 #' @param stat Which prior statistic to plot: the \code{"mean"} (default),
 #'  \code{"sd"} for the square root of the variance template, or \code{"var"}
@@ -326,10 +326,10 @@ print.prior.matrix <- function(x, ...) {
 #' @param var_method \code{"non-negative"} (default) or \code{"unbiased"}, for
 #'  the variance estimate of the maps. Note that FC variance estimates are
 #'  always non-negative.
-#' @param FC_method If \code{what=="FC"}: empirical (\code{"emp"}) (default), 
+#' @param FC_method If \code{what=="FC"}: empirical (\code{"emp"}) (default),
 #'  Inverse-Wishart (\code{"IW"}), or Cholesky (\code{"Chol"}).
-#' @param ... Additional arguments to \code{\link[ciftiTools]{view_xifti}} 
-#'  if \code{what=="maps"}, or \code{\link[fMRItools]{plot_FC_gg}} if 
+#' @param ... Additional arguments to \code{\link[ciftiTools]{view_xifti}}
+#'  if \code{what=="maps"}, or \code{\link[fMRItools]{plot_FC_gg}} if
 #'  \code{what=="FC"}.
 #' @return The plot
 #' @export
@@ -337,10 +337,10 @@ print.prior.matrix <- function(x, ...) {
 plot.prior.cifti <- function(x,
   what=c("maps", "FC"),
   stat=c("mean", "sd", "var"),
-  var_method=c("non-negative", "unbiased"), 
+  var_method=c("non-negative", "unbiased"),
   FC_method=c("emp", "IW", "Chol", "none"),
   ...) {
-  
+
   stopifnot(inherits(x, "prior.cifti"))
 
   if (!requireNamespace("ciftiTools", quietly = TRUE)) {
@@ -422,13 +422,17 @@ plot.prior.cifti <- function(x,
   if (what == "maps") {
     ### No title: use the network names if available, and the indices if not.
     if (!has_title && !has_idx) {
-      args_ss$title <- if (!is.null(x$dat_struct$meta$cifti$names)) {
+      args_ss$title <- if (!is.null(rownames(x$template_parc_table))) {
+        rownames(x$template_parc_table)[1]
+      } else if (!is.null(x$dat_struct$meta$cifti$names)) {
         x$dat_struct$meta$cifti$names[1]
       } else {
         "First network"
       }
     } else if (!has_title) {
-      args_ss$title <- if (!is.null(x$dat_struct$meta$cifti$names)) {
+      args_ss$title <- if (!is.null(rownames(x$template_parc_table))) {
+        rownames(x$template_parc_table)[args$idx]
+      } else if (!is.null(x$dat_struct$meta$cifti$names)) {
         x$dat_struct$meta$cifti$names[args$idx]
       } else {
         paste("Network", args$idx)
@@ -482,7 +486,7 @@ plot.prior.cifti <- function(x,
       #gvals <- grDevices::hcl.colors(3, palette="Blue-Red2")
       gvals <- c(
         "#5d0928", "#892041", "#b63b59", "#d26767", "#eb8e74", "#f4b794", "#fcdcba",
-        "#fffee6", 
+        "#fffee6",
         "#c7e7d8", "#99cbcf", "#68aec6", "#478db7", "#226ca7", "#1b4984", "#132560")
       args_ss$colFUN <- function(limits=c(-1,1), ...){
         ggplot2::scale_fill_gradientn(colours=gvals, limits=limits, ...)
@@ -500,12 +504,12 @@ plot.prior.cifti <- function(x,
 #' Plot prior
 #'
 #' @param x The prior from \code{estimate_prior.gifti}
-#' @param what The \code{"maps"} (default) on the brain, or the \code{"FC"} 
+#' @param what The \code{"maps"} (default) on the brain, or the \code{"FC"}
 #'  matrix. If both are desired, use two separate \code{plot} calls to first
 #'  plot the maps and then plot the FC.
-#' 
+#'
 #'  If \code{"FC"}, the default color scale will be from blue (-1) to red (1).
-#'  This can be changed with the \code{colFUN} argument to 
+#'  This can be changed with the \code{colFUN} argument to
 #'  \code{\link[fMRItools]{plot_FC_gg}}.
 #' @param stat Which prior statistic to plot: the \code{"mean"} (default),
 #'  \code{"sd"} for the square root of the variance template, or \code{"var"}
@@ -513,7 +517,7 @@ plot.prior.cifti <- function(x,
 #' @param var_method \code{"non-negative"} (default) or \code{"unbiased"}, for
 #'  the variance estimate of the maps. Note that FC variance estimates are
 #'  always non-negative.
-#' @param FC_method If \code{what=="FC"}: empirical (\code{"emp"}) (default), 
+#' @param FC_method If \code{what=="FC"}: empirical (\code{"emp"}) (default),
 #'  Inverse-Wishart (\code{"IW"}), or Cholesky (\code{"Chol"}).
 #' @param ... Additional arguments to \code{view_xifti} if \code{what=="maps"},
 #'  or \code{\link[fMRItools]{plot_FC_gg}} if \code{what=="FC"}.
@@ -523,7 +527,7 @@ plot.prior.cifti <- function(x,
 plot.prior.gifti <- function(x,
   what=c("maps", "FC"),
   stat=c("mean", "sd", "var"),
-  var_method=c("non-negative", "unbiased"), 
+  var_method=c("non-negative", "unbiased"),
   FC_method=c("emp", "IW", "Chol", "none"),
   ...) {
 
@@ -537,8 +541,8 @@ plot.prior.gifti <- function(x,
   y <- ciftiTools::move_from_mwall(y)
   x$dat_struct <- y; class(x) <- "prior.cifti"
 
-  plot.prior.cifti(x, 
-    what=what, stat=stat, FC_method=FC_method, var_method=var_method, 
+  plot.prior.cifti(x,
+    what=what, stat=stat, FC_method=FC_method, var_method=var_method,
     ...
   )
 }
@@ -551,12 +555,12 @@ plot.prior.gifti <- function(x,
 #'  viewer function (e.g. from \code{oro.nifti}) if desired.
 #'
 #' @param x The prior from \code{estimate_prior.nifti}
-#' @param what The \code{"maps"} (default) on the brain, or the \code{"FC"} 
+#' @param what The \code{"maps"} (default) on the brain, or the \code{"FC"}
 #'  matrix. If both are desired, use two separate \code{plot} calls to first
 #'  plot the maps and then plot the FC.
-#' 
+#'
 #'  If \code{"FC"}, the default color scale will be from blue (-1) to red (1).
-#'  This can be changed with the \code{colFUN} argument to 
+#'  This can be changed with the \code{colFUN} argument to
 #'  \code{\link[fMRItools]{plot_FC_gg}}.
 #' @param stat Which prior statistic to plot: the \code{"mean"} (default),
 #'  \code{"sd"} for the square root of the variance template, or \code{"var"}
@@ -564,22 +568,22 @@ plot.prior.gifti <- function(x,
 #' @param var_method \code{"non-negative"} (default) or \code{"unbiased"}, for
 #'  the variance estimate of the maps. Note that FC variance estimates are
 #'  always non-negative.
-#' @param FC_method If \code{what=="FC"}: empirical (\code{"emp"}) (default), 
+#' @param FC_method If \code{what=="FC"}: empirical (\code{"emp"}) (default),
 #'  Inverse-Wishart (\code{"IW"}), or Cholesky (\code{"Chol"}).
 #' @param plane,n_slices,slices Anatomical plane and which slice indices to
 #'  show.
 #'  Default: 9 axial slices.
-#' @param ... Additional arguments to \code{oro.nifti::image} 
-#'  if \code{what=="maps"}, or \code{\link[fMRItools]{plot_FC_gg}} if 
+#' @param ... Additional arguments to \code{oro.nifti::image}
+#'  if \code{what=="maps"}, or \code{\link[fMRItools]{plot_FC_gg}} if
 #'  \code{what=="FC"}.
 #' @return The plot
 #' @export
 #' @method plot prior.nifti
-plot.prior.nifti <- function(x, 
+plot.prior.nifti <- function(x,
   what=c("maps", "FC"),
   stat=c("mean", "sd", "var"),
   FC_method=c("emp", "IW", "Chol", "none"),
-  var_method=c("non-negative", "unbiased"), 
+  var_method=c("non-negative", "unbiased"),
   plane=c("axial", "sagittal", "coronal"), n_slices=9, slices=NULL,
   ...) {
 
