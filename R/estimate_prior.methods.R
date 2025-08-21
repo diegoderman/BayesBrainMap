@@ -355,6 +355,7 @@ plot.prior.cifti <- function(x,
   # Check `...`
   args <- list(...)
   has_title <- "title" %in% names(args)
+  skip_title <- has_title && is.null(args$title)
   has_idx <- "idx" %in% names(args)
   has_fname <- "fname" %in% names(args)
   has_labs <- "labs" %in% names(args)
@@ -453,6 +454,8 @@ plot.prior.cifti <- function(x,
     args_ss$fname <- gsub(paste0(".", fext), "", args_ss$fname, fixed=TRUE)
     args_ss$fname <- paste0(args_ss$fname, "_", ss, ".", fext)
   }
+
+  if (skip_title) { args_ss$title <- NULL }
 
   if (what == "maps") {
     out <- do.call(
