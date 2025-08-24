@@ -516,17 +516,21 @@ BrainMap <- function(
   if(method_FC == "VB1"){
     if('FC' %in% names(prior$prior)) {
       do_FC <- TRUE
-      prior_FC <- prior$prior$FC
-      prior$prior$FC <- prior$prior$FC_Chol <- NULL
+      prior_FC <- prior$prior$FC$empirical
+      prior_FC$nu <- prior$prior$FC$IW$nu
+      prior_FC$psi <- prior$prior$FC$IW$psi
+      prior$prior$FC <- NULL
     } else {
       warning("FC information not available in `prior`.  I will set `method_FC` to 'none' and perform standard prior ICA.")
       method_FC <- "none"
     }
   } else if(method_FC == "VB2"){
-    if('FC_Chol' %in% names(prior$prior)) {
+    if('Chol' %in% names(prior$prior$FC)) {
       do_FC <- TRUE
-      prior_FC <- prior$prior$FC_Chol
-      prior$prior$FC <- prior$prior$FC_Chol <- NULL
+      prior_FC <- prior$prior$FC$Chol
+      prior_FC$nu <- prior$prior$FC$IW$nu
+      prior_FC$psi <- prior$prior$FC$IW$psi
+      prior$prior$FC <- NULL
     } else {
       warning("Cholesky FC information not available in `prior`.  I will set `method_FC` to 'none' and perform standard prior ICA.")
       method_FC <- "none"
@@ -1021,11 +1025,11 @@ BrainMap <- function(
 
   verbose0 <- verbose
   if (verbose) {
-    if (do_spatial | do_FC) {
+    if (do_spatial || do_FC) {
       cat("Initializing with standard Bayesian brain mapping.\n")
       verbose <- FALSE
     }
-    if (!do_spatial & !do_FC) { cat("Computing Bayesian brain mapping.\n") }
+    if (!do_spatial && !do_FC) { cat("Computing Bayesian brain mapping.\n") }
   }
 
   if(do_spatial) {

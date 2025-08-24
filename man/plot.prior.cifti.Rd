@@ -9,7 +9,7 @@
   what = c("maps", "FC"),
   stat = c("mean", "sd", "var"),
   var_method = c("non-negative", "unbiased"),
-  FC_method = c("emp", "IW", "Chol", "none"),
+  FC_method = c("empirical", "IW", "Chol", "none"),
   ...
 )
 }

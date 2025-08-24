@@ -338,7 +338,7 @@ plot.prior.cifti <- function(x,
   what=c("maps", "FC"),
   stat=c("mean", "sd", "var"),
   var_method=c("non-negative", "unbiased"),
-  FC_method=c("emp", "IW", "Chol", "none"),
+  FC_method=c("empirical", "IW", "Chol", "none"),
   ...) {
 
   stopifnot(inherits(x, "prior.cifti"))
@@ -350,7 +350,7 @@ plot.prior.cifti <- function(x,
   what <- match.arg(what, c("maps", "FC"))
   stat <- match.arg(stat, c("mean", "sd", "var"))
   var_method <- match.arg(var_method, c("non-negative", "unbiased"))
-  FC_method <- match.arg(FC_method, c("emp", "IW", "Chol", "none"))
+  FC_method <- match.arg(FC_method, c("empirical", "IW", "Chol", "none"))
 
   # Check `...`
   args <- list(...)
@@ -396,15 +396,10 @@ plot.prior.cifti <- function(x,
 
   dat <- if (what == "maps") {
     x$prior[[ssname]]
-  } else if (FC_method == "emp") {
-    x$prior$FC[[switch(
-      ssname, mean="mean_empirical", varNN="var_empirical", varUB=stop())]]
-  } else if (FC_method == "IW") {
-    stop("Not implemented.")
-  } else if (FC_method == "Chol") {
-    x$prior$FC_Chol[[switch(
-      ssname, mean="FC_samp_mean", varNN="FC_samp_var", varUB=stop())]]
-  }
+  } else if (what == "FC") {
+    x$prior$FC[[FC_method]][[switch(
+      ssname, mean="mean", varNN="var", varUB=stop())]]
+  } else { stop() }
 
   if (ss=="var" && var_method=="unbiased") { dat[] <- pmax(0, dat) }
   if (ss=="sd") {
@@ -517,7 +512,7 @@ plot.prior.cifti <- function(x,
 #' @param var_method \code{"non-negative"} (default) or \code{"unbiased"}, for
 #'  the variance estimate of the maps. Note that FC variance estimates are
 #'  always non-negative.
-#' @param FC_method If \code{what=="FC"}: empirical (\code{"emp"}) (default),
+#' @param FC_method If \code{what=="FC"}: empirical (\code{"empirical"}) (default),
 #'  Inverse-Wishart (\code{"IW"}), or Cholesky (\code{"Chol"}).
 #' @param ... Additional arguments to \code{view_xifti} if \code{what=="maps"},
 #'  or \code{\link[fMRItools]{plot_FC_gg}} if \code{what=="FC"}.
@@ -528,7 +523,7 @@ plot.prior.gifti <- function(x,
   what=c("maps", "FC"),
   stat=c("mean", "sd", "var"),
   var_method=c("non-negative", "unbiased"),
-  FC_method=c("emp", "IW", "Chol", "none"),
+  FC_method=c("empirical", "IW", "Chol", "none"),
   ...) {
 
   stopifnot(inherits(x, "prior.gifti"))
@@ -568,7 +563,7 @@ plot.prior.gifti <- function(x,
 #' @param var_method \code{"non-negative"} (default) or \code{"unbiased"}, for
 #'  the variance estimate of the maps. Note that FC variance estimates are
 #'  always non-negative.
-#' @param FC_method If \code{what=="FC"}: empirical (\code{"emp"}) (default),
+#' @param FC_method If \code{what=="FC"}: empirical (\code{"empirical"}) (default),
 #'  Inverse-Wishart (\code{"IW"}), or Cholesky (\code{"Chol"}).
 #' @param plane,n_slices,slices Anatomical plane and which slice indices to
 #'  show.
@@ -582,7 +577,7 @@ plot.prior.gifti <- function(x,
 plot.prior.nifti <- function(x,
   what=c("maps", "FC"),
   stat=c("mean", "sd", "var"),
-  FC_method=c("emp", "IW", "Chol", "none"),
+  FC_method=c("empirical", "IW", "Chol", "none"),
   var_method=c("non-negative", "unbiased"),
   plane=c("axial", "sagittal", "coronal"), n_slices=9, slices=NULL,
   ...) {
@@ -685,15 +680,10 @@ plot.prior.nifti <- function(x,
 
   dat <- if (what == "maps") {
     x$prior[[ssname]]
-  } else if (FC_method == "emp") {
-    x$prior$FC[[switch(
-      ssname, mean="mean_empirical", varNN="var_empirical", varUB=stop())]]
-  } else if (FC_method == "IW") {
-    stop("Not implemented.")
-  } else if (FC_method == "Chol") {
-    x$prior$FC_Chol[[switch(
-      ssname, mean="FC_samp_mean", varNN="FC_samp_var", varUB=stop())]]
-  }
+  } else if (what == "FC") {
+    x$prior$FC[[FC_method]][[switch(
+      ssname, mean="mean", varNN="var", varUB=stop())]]
+  } else { stop() }
 
   if (ss=="var" && var_method=="unbiased") { dat[] <- pmax(0, dat) }
   if (stat=="sd") {

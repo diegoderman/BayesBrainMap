@@ -93,8 +93,7 @@ VB_FCBrainMap <- function(
   if (ntime > nvox) warning('More time points than brain locations. Are you sure?')
   if (nrow(prior_mean) != nvox) stop('Priors and BOLD must have the same number of brain locations (columns).')
 
-  if(method_FC == 'VB1') nNets <- nrow(prior_FC$psi)   #number of networks
-  if(method_FC == 'VB2') nNets <- nrow(prior_FC$FC_samp_mean) #number of networks
+  nNets <- nrow(prior_FC$psi)
   if (ncol(prior_mean) != nNets) stop('prior_FC is incompatible with prior_mean & prior_var. The number of networks in each must match.')
   if (nNets > nvox) stop('Cannot estimate more networks than brain locations.')
   if (nNets > ntime) stop('Cannot estimate more networks than time points.')

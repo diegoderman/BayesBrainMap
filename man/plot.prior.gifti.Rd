@@ -9,7 +9,7 @@
   what = c("maps", "FC"),
   stat = c("mean", "sd", "var"),
   var_method = c("non-negative", "unbiased"),
-  FC_method = c("emp", "IW", "Chol", "none"),
+  FC_method = c("empirical", "IW", "Chol", "none"),
   ...
 )
 }
@@ -32,7 +32,7 @@ for the variance template.}
 the variance estimate of the maps. Note that FC variance estimates are
 always non-negative.}
 
-\item{FC_method}{If \code{what=="FC"}: empirical (\code{"emp"}) (default),
+\item{FC_method}{If \code{what=="FC"}: empirical (\code{"empirical"}) (default),
 Inverse-Wishart (\code{"IW"}), or Cholesky (\code{"Chol"}).}
 
 \item{...}{Additional arguments to \code{view_xifti} if \code{what=="maps"},

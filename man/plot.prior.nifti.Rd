@@ -8,7 +8,7 @@
   x,
   what = c("maps", "FC"),
   stat = c("mean", "sd", "var"),
-  FC_method = c("emp", "IW", "Chol", "none"),
+  FC_method = c("empirical", "IW", "Chol", "none"),
   var_method = c("non-negative", "unbiased"),
   plane = c("axial", "sagittal", "coronal"),
   n_slices = 9,
@@ -31,7 +31,7 @@ This can be changed with the \code{colFUN} argument to
 \code{"sd"} for the square root of the variance template, or \code{"var"}
 for the variance template.}
 
-\item{FC_method}{If \code{what=="FC"}: empirical (\code{"emp"}) (default),
+\item{FC_method}{If \code{what=="FC"}: empirical (\code{"empirical"}) (default),
 Inverse-Wishart (\code{"IW"}), or Cholesky (\code{"Chol"}).}
 
 \item{var_method}{\code{"non-negative"} (default) or \code{"unbiased"}, for
