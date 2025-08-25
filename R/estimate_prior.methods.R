@@ -480,9 +480,9 @@ plot.prior.cifti <- function(x,
       }
       #gvals <- grDevices::hcl.colors(3, palette="Blue-Red2")
       gvals <- c(
-        "#5d0928", "#892041", "#b63b59", "#d26767", "#eb8e74", "#f4b794", "#fcdcba",
+        "#5d0928", "#c42532", "#fa7869", "#f4ae86", "#fcdcba",
         "#fffee6",
-        "#c7e7d8", "#99cbcf", "#68aec6", "#478db7", "#226ca7", "#1b4984", "#132560")
+        "#c7e7d8", "#87cacf", "#32afd9", "#0b6bb8", "#132560")
       args_ss$colFUN <- function(limits=c(-1,1), ...){
         ggplot2::scale_fill_gradientn(colours=gvals, limits=limits, ...)
       }
