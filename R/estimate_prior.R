@@ -1309,7 +1309,7 @@ estimate_prior <- function(
   tparams <- list(
     FC=FC, FC_nPivots=FC_nPivots, FC_nSamp=FC_nSamp,
     num_subjects=nN, num_visits=nM,
-    inds=inds,
+    inds=inds, nQ=nQ,
     GSR=GSR, scale=scale,
     scale_sm_FWHM=scale_sm_FWHM,
     hpf=hpf, TR=TR,
