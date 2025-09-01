@@ -471,23 +471,6 @@ plot.prior.cifti <- function(x,
       args_ss$labs <- net_names
     }
     if (!("diagVal" %in% names(args_ss)) && stat!="mean") { args_ss$diagVal <- 0 }
-    if (!("colFUN" %in% names(args_ss)) && stat=="mean") {
-      if (!requireNamespace("ggplot2", quietly = TRUE)) {
-        stop("Package \"ggplot2\" needed to read NIFTI data. Please install it.", call. = FALSE)
-      }
-        if (!requireNamespace("grDevices", quietly = TRUE)) {
-        stop("Package \"grDevices\" needed to read NIFTI data. Please install it.", call. = FALSE)
-      }
-      #gvals <- grDevices::hcl.colors(3, palette="Blue-Red2")
-      gvals <- rev(c(
-        "#7a001b", "#e01428", "#ffb8bc", "#fcfff2", "#43e0e3", "#1373eb", "#1a319c"))
-      args_ss$colFUN <- function(limits=c(-1,1), ...){
-        ggplot2::scale_fill_gradientn(
-          colours=gvals, limits=limits, 
-          values=c(0, .1, .25, .5, .75, .9, 1),
-          ...)
-      }
-    }
     out <- do.call(
       fMRItools::plot_FC_gg, c(list(dat), args_ss)
     )
@@ -755,18 +738,6 @@ plot.prior.nifti <- function(x,
       args_ss$labs <- net_names
     }
     if (!("diagVal" %in% names(args_ss)) && stat!="mean") { args_ss$diagVal <- 0 }
-    if (!("colFUN" %in% names(args_ss)) && stat=="mean") {
-      if (!requireNamespace("ggplot2", quietly = TRUE)) {
-        stop("Package \"ggplot2\" needed to read NIFTI data. Please install it.", call. = FALSE)
-      }
-        if (!requireNamespace("grDevices", quietly = TRUE)) {
-        stop("Package \"grDevices\" needed to read NIFTI data. Please install it.", call. = FALSE)
-      }
-      gvals <- grDevices::hcl.colors(3, palette="Blue-Red2")
-      args_ss$colFUN <- function(limits=c(-1,1), ...){
-        ggplot2::scale_fill_gradient2(low=gvals[1], mid=gvals[2], high=gvals[3], limits=limits, ...)
-      }
-    }
     out <- do.call(
       fMRItools::plot_FC_gg, c(list(dat), args_ss)
     )
