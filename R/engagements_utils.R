@@ -53,9 +53,9 @@ format_engagement_name <- function(u, z, type, deviation, collapse=FALSE){
 
   # right-hand side, build from right to left.
   RHS <- if (length(z)==1 || (length(z)>1 && !collapse)) {
-    ifelse(z==0, "0", paste0(z, "*z"))
+    ifelse(z==0, "0", paste0(z, "*\u03C3"))
   } else if (length(z)>1) {
-    "c*z (multiple `c` evaluated)"
+    "c*\u03C3 (multiple `c` evaluated)"
   } else if (length(u)==1 || (length(u)>1 && !collapse)) {
     as.character(u)
   } else if (length(u) > 1) {
