@@ -33,6 +33,7 @@ estimate_prior(
   FC = TRUE,
   FC_nPivots = 100,
   FC_nSamp = 50000,
+  FC_updateA = FALSE,
   varTol = 1e-06,
   maskTol = 0.1,
   missingTol = 0.1,
@@ -290,6 +291,9 @@ estimation.  Set to zero to skip Cholesky-based FC prior estimation. Default: 10
 
 \item{FC_nSamp}{Number of FC matrix samples to generate across all pivots. This
 should be a multiple of FC_nPivots.}
+
+\item{FC_updateA}{Update the timecourses before computing FC? Default:
+\code{FALSE}. Only applies if \code{FC}.}
 
 \item{varTol}{Tolerance for variance of each data location. For each scan,
 locations which do not meet this threshold are masked out of the analysis.

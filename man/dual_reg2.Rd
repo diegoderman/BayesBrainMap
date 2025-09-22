@@ -27,6 +27,7 @@ dual_reg2(
   NA_limit = 0.1,
   brainstructures = "all",
   resamp_res = NULL,
+  FC_updateA_path = NULL,
   varTol = 1e-06,
   maskTol = 0.1,
   verbose = TRUE
@@ -152,6 +153,8 @@ Default: \code{c("all")}.}
 
 \item{resamp_res}{Only applies if the entries of \code{BOLD} are CIFTI file paths.
 Resample the data upon reading it in? Default: \code{NULL} (no resampling).}
+
+\item{FC_updateA_path}{Where to save the BOLD if \code{FC_updateA}.}
 
 \item{varTol}{Tolerance for variance of each data location. For each scan,
 locations which do not meet this threshold are masked out of the analysis.

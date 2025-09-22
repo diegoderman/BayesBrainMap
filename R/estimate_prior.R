@@ -539,6 +539,8 @@ Chol_samp_fun <- function(Chol_vals, p, M, chol_diag, chol_offdiag, Chol_mat_bla
 #' estimation.  Set to zero to skip Cholesky-based FC prior estimation. Default: 100.
 #' @param FC_nSamp Number of FC matrix samples to generate across all pivots. This
 #' should be a multiple of FC_nPivots.
+#' @param FC_updateA Update the timecourses before computing FC? Default:
+#'  \code{FALSE}. Only applies if \code{FC}. 
 #' @param varTol Tolerance for variance of each data location. For each scan,
 #'  locations which do not meet this threshold are masked out of the analysis.
 #'  Default: \code{1e-6}. Variance is calculated on the original data, before
@@ -629,6 +631,7 @@ estimate_prior <- function(
   FC=TRUE,
   FC_nPivots=100,
   FC_nSamp=50000,
+  FC_updateA=FALSE,
   varTol=1e-6,
   maskTol=.1,
   missingTol=.1,
@@ -680,6 +683,11 @@ estimate_prior <- function(
     nC <- 0
   }
   stopifnot(fMRItools::is_1(FC, "logical"))
+  stopifnot(fMRItools::is_1(FC_updateA, "logical"))
+  if (!FC && FC_updateA) { 
+    message("`FC_updateA` only applicable if `FC`. Setting `FC_updateA` to `FALSE`.")
+    FC_updateA <- FALSE
+  }
   stopifnot(fMRItools::is_1(varTol, "numeric"))
   if (varTol < 0) { message("Setting `varTol=0`."); varTol <- 0 }
   stopifnot(fMRItools::is_posNum(maskTol, zero_ok=TRUE))
@@ -1039,11 +1047,15 @@ estimate_prior <- function(
     if(FC_nPivots > 0){
       FC_nSamp2 <- round(FC_nSamp/FC_nPivots) #number of samples per pivot
     }
-  } #end setup for FC prior estimation
-
+  } 
+  if (!FC_updateA) {
+    FC_updateA_path_ii <- NULL # will be changed for each ii if `FC_updateA`
+  }
 
   if (usePar) {
     check_parallel_packages()
+
+    if (FC_updateA) { FC_updateA_path <- tempdir() }
 
     # Loop over subjects.
     `%dopar%` <- foreach::`%dopar%`
@@ -1059,9 +1071,7 @@ estimate_prior <- function(
 
       # Initialize output.
       out <- list(DR=array(NA, dim=c(nM, 1, nL, nV)))
-      if (FC) {
-        out$FC <- array(NA, dim=c(nM, 1, nL, nL))
-       } #end setup for FC prior estimation
+      if (FC && !FC_updateA) { out$FC <- array(NA, dim=c(nM, 1, nL, nL)) }
       out$sigma_sq <- array(NA, dim=c(nM, 1, nV))
 
       # Dual regression.
@@ -1069,6 +1079,12 @@ estimate_prior <- function(
         '\nSubject ', ii,' of ', nN, ".\n"
       )) }
       if (real_retest) { B2 <- BOLD2[[ii]] } else { B2 <- NULL }
+
+      if (FC_updateA) {
+        FC_updateA_path_ii <- file.path(FC_updateA_path, ii)
+        dir.create(FC_updateA_path_ii)
+      }
+
       DR_ii <- try(dual_reg2(
         BOLD[[ii]], BOLD2=B2,
         format=format,
@@ -1084,6 +1100,7 @@ estimate_prior <- function(
         hpf=hpf, TR=TR,
         Q2=Q2, Q2_max=Q2_max,
         brainstructures=brainstructures, resamp_res=resamp_res,
+        FC_updateA_path=FC_updateA_path_ii,
         varTol=varTol, maskTol=maskTol,
         verbose=verbose
       ))
@@ -1102,7 +1119,7 @@ estimate_prior <- function(
       } else {
         out$DR[1,,,] <- DR_ii$test$S[inds,]
         out$DR[2,,,] <- DR_ii$retest$S[inds,]
-        if(FC) {
+        if (FC && !FC_updateA) {
           out$FC[1,,,] <- cov(DR_ii$test$A[,inds])
           out$FC[2,,,] <- cov(DR_ii$retest$A[,inds])
           #out$FC_chol[1,,] <- chol(out$FC[1,,,])[upper.tri(out$FC[1,,,], diag=TRUE)]
@@ -1117,7 +1134,7 @@ estimate_prior <- function(
 
     # Aggregate.
     DR0 <- abind::abind(lapply(q, `[[`, "DR"), along=2)
-    if (FC) {
+    if (FC && !FC_updateA) {
       FC0 <- abind::abind(lapply(q, `[[`, "FC"), along=2)
       #FC0_chol <- abind::abind(lapply(q, `[[`, "FC_chol"), along=2)
     }
@@ -1129,10 +1146,11 @@ estimate_prior <- function(
   } else {
     # Initialize output.
     DR0 <- array(NA, dim=c(nM, nN, nL, nV)) # measurements by subjects by components by locations
-    if(FC) {
+    if (FC && !FC_updateA) {
       FC0 <- array(NA, dim=c(nM, nN, nL, nL)) # for functional connectivity prior
       #FC0_chol <- array(NA, dim=c(nM, nN, nL*(nL+1)/2))
     }
+    if (FC_updateA) { FC_updateA_path <- tempdir() }
     sigma_sq0 <- array(NA, dim=c(nM, nN, nV))
 
     for (ii in seq(nN)) {
@@ -1140,6 +1158,11 @@ estimate_prior <- function(
         '\nSubject ', ii,' of ', nN, '.\n'
       )) }
       if (real_retest) { B2 <- BOLD2[[ii]] } else { B2 <- NULL }
+
+      if (FC_updateA) {
+        FC_updateA_path_ii <- file.path(FC_updateA_path, ii)
+        dir.create(FC_updateA_path_ii)
+      }
 
       DR_ii <- try(dual_reg2(
         BOLD[[ii]], BOLD2=B2,
@@ -1156,6 +1179,7 @@ estimate_prior <- function(
         hpf=hpf, TR=TR,
         Q2=Q2, Q2_max=Q2_max,
         brainstructures=brainstructures, resamp_res=resamp_res,
+        FC_updateA_path=FC_updateA_path_ii,
         varTol=varTol, maskTol=maskTol,
         verbose=verbose
       ))
@@ -1174,7 +1198,7 @@ estimate_prior <- function(
       } else {
         DR0[1,ii,,] <- DR_ii$test$S[inds,]
         DR0[2,ii,,] <- DR_ii$retest$S[inds,]
-        if(FC) {
+        if (FC && !FC_updateA) {
           FC0[1,ii,,] <- cov(DR_ii$test$A[,inds])
           FC0[2,ii,,] <- cov(DR_ii$retest$A[,inds])
           if(!all(round(diag(FC0[1,ii,,]),6) == 1)) stop('var(A) should be 1 but it is not')
@@ -1234,13 +1258,32 @@ estimate_prior <- function(
   prior[2:3] <- lapply(prior[2:3], function(x) return(x / (rescale^2)) ) #scale var(S)
   var_decomp <- lapply(var_decomp, function(x) return(x / (rescale^2) ) ) #scale var(S)
 
+  if (FC_updateA) {
+    FC0 <- array(NA, dim=c(nM, nN, nL, nL))
+    if (verbose ) { cat("\nUpdating timecourses for FC estimate.\n") }
+
+    for (ii in seq(nN)) {
+      BOLD_old <- readRDS(file.path(FC_updateA_path, ii, "BOLDkeep.rds"))
+      A_updated_ii_1 <- fMRItools::dual_reg(
+        BOLD = BOLD_old$test,
+        GICA=prior$mean, scale="none", hpf=0, GSR=FALSE
+      )$A
+      A_updated_ii_2 <- fMRItools::dual_reg(
+        BOLD = BOLD_old$retest,
+        GICA=prior$mean, scale="none", hpf=0, GSR=FALSE
+      )$A
+      FC0[1,ii,,] <- cov(A_updated_ii_1[,inds])
+      FC0[2,ii,,] <- cov(A_updated_ii_2[,inds])
+    }
+
+    unlink(FC_updateA_path, recursive=TRUE)
+  }
+
   # Unmask the data matrices (relative to `mask2`, not `mask`).
   if (use_mask2) {
     prior <- lapply(prior, fMRItools::unmask_mat, mask=mask2)
     var_decomp <- lapply(var_decomp, fMRItools::unmask_mat, mask=mask2)
   }
-
-
 
   # Estimate FC prior
   if(FC){

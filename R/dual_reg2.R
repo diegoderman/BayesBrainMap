@@ -91,6 +91,7 @@
 #'  than \eqn{T * .75 - Q} where \eqn{T} is the minimum number of timepoints in
 #'  each fMRI scan and \eqn{Q} is the number of networks in \code{template}. If \code{NULL}
 #'  (default), \code{Q2_max} will be set to \eqn{T * .50 - Q}, rounded.
+#' @param FC_updateA_path Where to save the BOLD if \code{FC_updateA}.
 #' @inheritParams varTol_Param
 #' @param maskTol Tolerance for number of locations masked out due to low
 #'  variance or missing values. If more than this many locations are masked out,
@@ -125,6 +126,7 @@ dual_reg2 <- function(
   Q2=0, Q2_max=NULL,
   NA_limit=.1,
   brainstructures="all", resamp_res=NULL,
+  FC_updateA_path=NULL,
   varTol=1e-6, maskTol=.1,
   verbose=TRUE){
 
@@ -436,13 +438,7 @@ dual_reg2 <- function(
   DR_FUN <- if (template_parc) {
     function(template, ...) { fMRItools::dual_reg_parc(parc=template, ...) }
   } else {
-    # Do twice to get timecourse estimate w/ subject maps, rather than w/ template (`A2`)
-    function(template, parc_vals, ...) {
-      out <- fMRItools::dual_reg(GICA=template, ...)
-      template <- t(out$S)
-      out$A2 <- fMRItools::dual_reg(GICA=template, ...)$A
-      out
-    }
+    function(template, parc_vals, ...) { fMRItools::dual_reg(GICA=template, ...) }
   }
 
   dual_reg_yesNorm <- function(B){ DR_FUN(
@@ -485,10 +481,19 @@ dual_reg2 <- function(
 
   # Return these DR results if denoising is not needed. ------------------------
   if ((!is.null(Q2) && Q2==0) || (!is.null(Q2_max) && Q2_max==0)) {
+
+    if (!is.null(FC_updateA_path)) {
+      BOLDkeep <- list(
+        test = if (!retest) { BOLDh1 } else { BOLD },
+        retest = if (!retest) { BOLDh2 } else { BOLD2 }
+      )
+      saveRDS(BOLDkeep, file.path(FC_updateA_path, "BOLDkeep.rds"))
+    }
+
     for (sess in c("test", "retest")) {
       out[[sess]]$sigma_sq <- colSums((out[[sess]]$A %*% out[[sess]]$S - t(BOLDss[[sess]]))^2)/nT # part inside colSums() is TxV
       if (use_mask2) { out[[sess]]$sigma_sq <- unmask_vec(out[[sess]]$sigma_sq, mask2) }
-      if (!keepA) { out[[sess]]$A <- NULL; out[[sess]]$A2 <- NULL }
+      if (!keepA) { out[[sess]]$A <- NULL }
       if (use_mask2) { out[[sess]]$S <- unmask(out[[sess]]$S, mask2) }
     }
 
@@ -517,6 +522,14 @@ dual_reg2 <- function(
   BOLD <- this_norm_BOLD(BOLD)
   BOLD2 <- this_norm_BOLD(BOLD2)
 
+  if (!is.null(FC_updateA_path)) {
+    BOLDkeep <- list(
+      test = BOLD,
+      retest = BOLD2
+    )
+    saveRDS(BOLDkeep, file.path(FC_updateA_path, "BOLDkeep.rds"))
+  }
+
   # Do DR again. ---------------------------------------------------------------
   if (verbose) { cat("\n\tDual regression again... ") }
 
@@ -532,7 +545,7 @@ dual_reg2 <- function(
   for (sess in c("test", "retest", "test_preclean", "retest_preclean")) {
     out[[sess]]$sigma_sq <- colSums((out[[sess]]$A %*% out[[sess]]$S - t(BOLDss[[sess]]))^2)/nT # part inside colSums() is TxV
     if (use_mask2) { out[[sess]]$sigma_sq <- unmask_vec(out[[sess]]$sigma_sq, mask2) }
-    if (!keepA) { out[[sess]]$A <- NULL; out[[sess]]$A2 <- NULL }
+    if (!keepA) { out[[sess]]$A <- NULL }
     if (use_mask2) { out[[sess]]$S <- unmask(out[[sess]]$S, mask2) }
   }
 
