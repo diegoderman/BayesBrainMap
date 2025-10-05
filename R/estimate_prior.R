@@ -137,7 +137,7 @@ estimate_prior_FC_empirical <- function(FC0, nu_adjust=1){
 }
 
 #' Estimate IW FC prior
-#' 
+#'
 #' @param FC_mean_emp Empirical FC mean estimate
 #' @param FC_var_emp Empirical FC variance estimate
 #' @param nu_adjust Factor by which to adjust estimate of nu.  Values < 1 will
@@ -154,7 +154,7 @@ estimate_prior_FC_IW <- function(FC_mean_emp, FC_var_emp, nL, nQ, nu_adjust=1) {
   for (q1 in seq(nQ)) {
     for (q2 in seq(nQ)) {
       FC_var_IW[q1, q2] <- IW_var(
-        nu_est, nQ, 
+        nu_est, nQ,
         FC_mean_IW[q1,q2], FC_mean_IW[q1,q1], FC_mean_IW[q2,q2]
       )
     }
@@ -165,12 +165,12 @@ estimate_prior_FC_IW <- function(FC_mean_emp, FC_var_emp, nL, nQ, nu_adjust=1) {
 }
 
 #' Estimate Cholesky FC prior
-#' 
+#'
 #' @param FC_nPivots,nL,FC0,FC_nSamp2 The parameters
 #' @keywords internal
 #' @importFrom stats complete.cases
 estimate_prior_FC_Chol <- function(FC_nPivots, nL, FC0, FC_nSamp2, verbose) {
-  
+
   pivots <- Chol_samp <- Chol_svd <- vector("list", FC_nPivots)
   for (pp in seq(FC_nPivots)) {
     pivots[[pp]] <- sample(1:nL, nL, replace = FALSE)
@@ -268,7 +268,7 @@ estimate_prior_FC_Chol <- function(FC_nPivots, nL, FC0, FC_nSamp2, verbose) {
   if (length(pivot_failures) > 0) {
     mean_failures_per_failed_pivot <- mean(pivot_failures)
     min_failures_per_failed_pivot <- min(pivot_failures)
-    max_failures_per_failed_pivot <- max(pivot_failures) 
+    max_failures_per_failed_pivot <- max(pivot_failures)
   } else {
     mean_failures_per_failed_pivot <- 0
     min_failures_per_failed_pivot <- 0
@@ -282,7 +282,7 @@ estimate_prior_FC_Chol <- function(FC_nPivots, nL, FC0, FC_nSamp2, verbose) {
 
   list(
     mean = FC_samp_mean,
-    var = FC_samp_var, 
+    var = FC_samp_var,
     Chol_samp = Chol_samp, #pivoted Cholesky factors for every sample
     FC_samp_logdet = FC_samp_logdet, #log determinant values for every sample
     FC_samp_cholinv = FC_samp_cholinv, #pivoted Cholesky inverses for every sample
@@ -540,7 +540,7 @@ Chol_samp_fun <- function(Chol_vals, p, M, chol_diag, chol_offdiag, Chol_mat_bla
 #' @param FC_nSamp Number of FC matrix samples to generate across all pivots. This
 #' should be a multiple of FC_nPivots.
 #' @param FC_updateA Update the timecourses before computing FC? Default:
-#'  \code{FALSE}. Only applies if \code{FC}. 
+#'  \code{FALSE}. Only applies if \code{FC}.
 #' @param varTol Tolerance for variance of each data location. For each scan,
 #'  locations which do not meet this threshold are masked out of the analysis.
 #'  Default: \code{1e-6}. Variance is calculated on the original data, before
@@ -684,7 +684,7 @@ estimate_prior <- function(
   }
   stopifnot(fMRItools::is_1(FC, "logical"))
   stopifnot(fMRItools::is_1(FC_updateA, "logical"))
-  if (!FC && FC_updateA) { 
+  if (!FC && FC_updateA) {
     message("`FC_updateA` only applicable if `FC`. Setting `FC_updateA` to `FALSE`.")
     FC_updateA <- FALSE
   }
@@ -918,6 +918,14 @@ estimate_prior <- function(
       nL <- nQ
     }
   }
+  # If updating `A` estimates for FC calculation, we need all networks'
+  #   estimated mean priors.
+  if (FC_updateA) {
+    inds2 <- inds
+    nL2 <- nL
+    inds <- seq(nQ)
+    nL <- nQ
+  }
 
   # [TO DO]: NA in template?
 
@@ -1047,7 +1055,7 @@ estimate_prior <- function(
     if(FC_nPivots > 0){
       FC_nSamp2 <- round(FC_nSamp/FC_nPivots) #number of samples per pivot
     }
-  } 
+  }
   if (!FC_updateA) {
     FC_updateA_path_ii <- NULL # will be changed for each ii if `FC_updateA`
   }
@@ -1055,7 +1063,10 @@ estimate_prior <- function(
   if (usePar) {
     check_parallel_packages()
 
-    if (FC_updateA) { FC_updateA_path <- tempdir() }
+    if (FC_updateA) { 
+      FC_updateA_path <- file.path(tempdir(check=TRUE), "FC_updateA")
+      dir.create(FC_updateA_path)
+    }
 
     # Loop over subjects.
     `%dopar%` <- foreach::`%dopar%`
@@ -1117,11 +1128,11 @@ estimate_prior <- function(
         ))
         if (ii==1) { message(DR_ii); stop("Error on first subject. Check data?") }
       } else {
-        out$DR[1,,,] <- DR_ii$test$S[inds,]
-        out$DR[2,,,] <- DR_ii$retest$S[inds,]
+        out$DR[1,,,] <- DR_ii$test$S[inds,,drop=FALSE]
+        out$DR[2,,,] <- DR_ii$retest$S[inds,,drop=FALSE]
         if (FC && !FC_updateA) {
-          out$FC[1,,,] <- cov(DR_ii$test$A[,inds])
-          out$FC[2,,,] <- cov(DR_ii$retest$A[,inds])
+          out$FC[1,,,] <- cov(DR_ii$test$A[,inds,drop=FALSE])
+          out$FC[2,,,] <- cov(DR_ii$retest$A[,inds,drop=FALSE])
           #out$FC_chol[1,,] <- chol(out$FC[1,,,])[upper.tri(out$FC[1,,,], diag=TRUE)]
           #out$FC_chol[2,,] <- chol(out$FC[2,,,])[upper.tri(out$FC[2,,,], diag=TRUE)]
         }
@@ -1150,7 +1161,10 @@ estimate_prior <- function(
       FC0 <- array(NA, dim=c(nM, nN, nL, nL)) # for functional connectivity prior
       #FC0_chol <- array(NA, dim=c(nM, nN, nL*(nL+1)/2))
     }
-    if (FC_updateA) { FC_updateA_path <- tempdir() }
+    if (FC_updateA) { 
+      FC_updateA_path <- file.path(tempdir(check=TRUE), "FC_updateA")
+      dir.create(FC_updateA_path)
+    }
     sigma_sq0 <- array(NA, dim=c(nM, nN, nV))
 
     for (ii in seq(nN)) {
@@ -1196,11 +1210,11 @@ estimate_prior <- function(
         ))
         if (ii==1) { message(DR_ii); stop("Error on first subject. Check data?") }
       } else {
-        DR0[1,ii,,] <- DR_ii$test$S[inds,]
-        DR0[2,ii,,] <- DR_ii$retest$S[inds,]
+        DR0[1,ii,,] <- DR_ii$test$S[inds,,drop=FALSE]
+        DR0[2,ii,,] <- DR_ii$retest$S[inds,,drop=FALSE]
         if (FC && !FC_updateA) {
-          FC0[1,ii,,] <- cov(DR_ii$test$A[,inds])
-          FC0[2,ii,,] <- cov(DR_ii$retest$A[,inds])
+          FC0[1,ii,,] <- cov(DR_ii$test$A[,inds,drop=FALSE])
+          FC0[2,ii,,] <- cov(DR_ii$retest$A[,inds,drop=FALSE])
           if(!all(round(diag(FC0[1,ii,,]),6) == 1)) stop('var(A) should be 1 but it is not')
           if(!all(round(diag(FC0[2,ii,,]),6) == 1)) stop('var(A) should be 1 but it is not')
           #FC0_chol[1,ii,] <- chol(FC0[1,ii,,])[upper.tri(FC0[1,ii,,], diag=TRUE)]
@@ -1257,9 +1271,10 @@ estimate_prior <- function(
   prior$mean <- prior$mean / rescale #scale mean(S)
   prior[2:3] <- lapply(prior[2:3], function(x) return(x / (rescale^2)) ) #scale var(S)
   var_decomp <- lapply(var_decomp, function(x) return(x / (rescale^2) ) ) #scale var(S)
+  rm(rescale)
 
   if (FC_updateA) {
-    FC0 <- array(NA, dim=c(nM, nN, nL, nL))
+    FC0 <- array(NA, dim=c(nM, nN, nL2, nL2))
     if (verbose ) { cat("\nUpdating timecourses for FC estimate.\n") }
 
     for (ii in seq(nN)) {
@@ -1272,9 +1287,21 @@ estimate_prior <- function(
         BOLD = BOLD_old$retest,
         GICA=prior$mean, scale="none", hpf=0, GSR=FALSE
       )$A
-      FC0[1,ii,,] <- cov(A_updated_ii_1[,inds])
-      FC0[2,ii,,] <- cov(A_updated_ii_2[,inds])
+      FC0[1,ii,,] <- cov(A_updated_ii_1[,inds2,drop=FALSE])
+      FC0[2,ii,,] <- cov(A_updated_ii_2[,inds2,drop=FALSE])
     }
+
+    # Delete networks not in user-provided `inds`
+    #   subset `DR0`
+    DR0 <- array(DR0, dim=c(nM, nN, nL, nVm)) # Undo vectorize
+    DR0 <- DR0[,,nL2,,drop=FALSE]
+    DR0 <- array(DR0, dim=c(nM, nN, nL2*nVm)) # Redo vectorize
+    #   use provided `inds` rather than all networks
+    nL <- nL2; rm(nL2)
+    inds <- inds2; rm(inds2)
+    #   subset results
+    prior <- lapply(prior, function(mat){ mat[,inds,drop=FALSE] })
+    var_decomp <- lapply(var_decomp, function(mat){ mat[,inds,drop=FALSE] })
 
     unlink(FC_updateA_path, recursive=TRUE)
   }
@@ -1291,7 +1318,7 @@ estimate_prior <- function(
     if (verbose) { cat("\nCalculating parametric FC prior.\n") }
 
     prior$FC <- list(empirical=NULL, IW=NULL, Chol=NULL)
-    
+
     prior$FC$empirical <- estimate_prior_FC_empirical(FC0)
 
     prior$FC$IW <- estimate_prior_FC_IW(
