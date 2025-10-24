@@ -1064,7 +1064,7 @@ estimate_prior <- function(
     check_parallel_packages()
 
     if (FC_updateA) { 
-      FC_updateA_path <- file.path(tempdir(check=TRUE), "FC_updateA")
+      FC_updateA_path <- tempfile(pattern="FC_updateA_", tmpdir=tempdir(check=TRUE))
       dir.create(FC_updateA_path)
     }
 
@@ -1162,7 +1162,7 @@ estimate_prior <- function(
       #FC0_chol <- array(NA, dim=c(nM, nN, nL*(nL+1)/2))
     }
     if (FC_updateA) { 
-      FC_updateA_path <- file.path(tempdir(check=TRUE), "FC_updateA")
+      FC_updateA_path <- tempfile(pattern="FC_updateA_", tmpdir=tempdir(check=TRUE))
       dir.create(FC_updateA_path)
     }
     sigma_sq0 <- array(NA, dim=c(nM, nN, nV))
