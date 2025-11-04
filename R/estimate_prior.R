@@ -1084,6 +1084,7 @@ estimate_prior <- function(
       out <- list(DR=array(NA, dim=c(nM, 1, nL, nV)))
       if (FC && !FC_updateA) { out$FC <- array(NA, dim=c(nM, 1, nL, nL)) }
       out$sigma_sq <- array(NA, dim=c(nM, 1, nV))
+      out$DR_ok <- FALSE
 
       # Dual regression.
       if(verbose) { cat(paste0(
@@ -1128,6 +1129,7 @@ estimate_prior <- function(
         ))
         if (ii==1) { message(DR_ii); stop("Error on first subject. Check data?") }
       } else {
+        out$DR_ok <- TRUE
         out$DR[1,,,] <- DR_ii$test$S[inds,,drop=FALSE]
         out$DR[2,,,] <- DR_ii$retest$S[inds,,drop=FALSE]
         if (FC && !FC_updateA) {
@@ -1144,6 +1146,7 @@ estimate_prior <- function(
     }
 
     # Aggregate.
+    DR_ok <- vapply(q, `[[`, FALSE, "DR_ok")
     DR0 <- abind::abind(lapply(q, `[[`, "DR"), along=2)
     if (FC && !FC_updateA) {
       FC0 <- abind::abind(lapply(q, `[[`, "FC"), along=2)
@@ -1156,6 +1159,7 @@ estimate_prior <- function(
 
   } else {
     # Initialize output.
+    DR_ok <- rep(FALSE, nN)
     DR0 <- array(NA, dim=c(nM, nN, nL, nV)) # measurements by subjects by components by locations
     if (FC && !FC_updateA) {
       FC0 <- array(NA, dim=c(nM, nN, nL, nL)) # for functional connectivity prior
@@ -1210,6 +1214,7 @@ estimate_prior <- function(
         ))
         if (ii==1) { message(DR_ii); stop("Error on first subject. Check data?") }
       } else {
+        DR_ok[ii] <- TRUE
         DR0[1,ii,,] <- DR_ii$test$S[inds,,drop=FALSE]
         DR0[2,ii,,] <- DR_ii$retest$S[inds,,drop=FALSE]
         if (FC && !FC_updateA) {
@@ -1278,6 +1283,7 @@ estimate_prior <- function(
     if (verbose ) { cat("\nUpdating timecourses for FC estimate.\n") }
 
     for (ii in seq(nN)) {
+      if (!DR_ok[ii]) { next }
       BOLD_old <- readRDS(file.path(FC_updateA_path, ii, "BOLDkeep.rds"))
       A_updated_ii_1 <- fMRItools::dual_reg(
         BOLD = BOLD_old$test,
