@@ -7,7 +7,7 @@
 BrainMap(
   BOLD,
   prior,
-  tvar_method = c("non-negative", "unbiased"),
+  var_method = c("non-negative", "unbiased"),
   scale = c("prior", "global", "local", "none"),
   scale_sm_surfL = NULL,
   scale_sm_surfR = NULL,
@@ -53,12 +53,12 @@ regression estimate.}
 \item{prior}{Prior estimates in a format compatible with \code{BOLD},
 from \code{\link{estimate_prior}}.}
 
-\item{tvar_method}{Which calculation of the prior variance to use:
+\item{var_method}{Which calculation of the prior variance to use:
 \code{"non-negative"} (default) or \code{"unbiased"}. The unbiased prior
 variance is based on the assumed mixed effects/ANOVA model, whereas the
 non-negative prior variance adds to it to account for greater potential
 between-subjects variation. (The prior mean is the same for either choice
-of \code{tvar_method}.)}
+of \code{var_method}.)}
 
 \item{scale}{\code{"global"}, \code{"local"}, or \code{"none"}.
 Global scaling will divide the entire data matrix by the mean image standard

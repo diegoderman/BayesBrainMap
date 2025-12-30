@@ -14,12 +14,12 @@
 #'  regression estimate.
 #' @param prior Prior estimates in a format compatible with \code{BOLD},
 #'  from \code{\link{estimate_prior}}.
-#' @param tvar_method Which calculation of the prior variance to use:
+#' @param var_method Which calculation of the prior variance to use:
 #'  \code{"non-negative"} (default) or \code{"unbiased"}. The unbiased prior
 #'  variance is based on the assumed mixed effects/ANOVA model, whereas the
 #'  non-negative prior variance adds to it to account for greater potential
 #'  between-subjects variation. (The prior mean is the same for either choice
-#'  of \code{tvar_method}.)
+#'  of \code{var_method}.)
 #' @param GSR Center BOLD across columns (each image)? This
 #'  is equivalent to performing global signal regression. Default:
 #'  \code{"prior"}, to use the same option used for estimation of the
@@ -207,7 +207,7 @@
 #' }
 BrainMap <- function(
   BOLD, prior,
-  tvar_method=c("non-negative", "unbiased"),
+  var_method=c("non-negative", "unbiased"),
   #tinds=NULL,
   scale=c("prior", "global", "local", "none"),
   scale_sm_surfL=NULL, 
@@ -308,8 +308,8 @@ BrainMap <- function(
   if (varTol == "prior") { varTol <- prior$params$varTol }
 
   # Remaining simple argument checks.
-  tvar_method <- match.arg(tvar_method, c("non-negative", "unbiased"))
-  tvar_name <- switch(tvar_method, `non-negative`="varNN", unbiased="varUB")
+  var_method <- match.arg(var_method, c("non-negative", "unbiased"))
+  tvar_name <- switch(var_method, `non-negative`="varNN", unbiased="varUB")
   if (is.null(scale) || isFALSE(scale)) { scale <- "none" }
   if (isTRUE(scale)) {
     warning(
@@ -1202,7 +1202,7 @@ BrainMap <- function(
     Q2=Q2, Q2_max=Q2_max, Q2_est=Q2_est,
     covariate_names=covariate_names,
     brainstructures=brainstructures,
-    tvar_method=tvar_method,
+    var_method=var_method,
     spatial_model=do_spatial,
     rm_mwall=rm_mwall,
     reduce_dim=reduce_dim,

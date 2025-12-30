@@ -56,6 +56,12 @@ pr_cii <- estimate_prior(
   brainstructures=c("left", "right"), FC_nPivots=4, FC_nSamp=100
 )
 
+pr2_cii <- estimate_prior(
+  cii_fnames[seq(3)], template = gparc, TR=.72, hpf=0, FC=TRUE,
+  inds=c(5, seq(8, 11)),
+  brainstructures=c("left", "right"), FC_nPivots=4, FC_nSamp=100
+)
+
 pr_cii <- estimate_prior(
   cii_fnames[seq(3)], template=gparc,
   TR=.72, hpf=0, FC=FALSE,
