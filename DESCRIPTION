@@ -20,6 +20,10 @@ Authors@R: c(
     person(given = "Mary Beth",
            family = "Nebel",
            email = "Nebel@kennedykrieger.org",
+           role = c("ctb")),
+    person(given = "Nohelia",
+           family = "Da Silva",
+           email = "nohelia.dasilva@gmail.com",
            role = c("ctb"))
     )
 Maintainer: Amanda Mejia <mandy.mejia@gmail.com>
