@@ -905,7 +905,14 @@ estimate_prior <- function(
 
     # Loop over subjects.
     `%dopar%` <- foreach::`%dopar%`
+<<<<<<< HEAD
     q <- foreach::foreach(ii = seq(nN), .packages=c("ciftiTools", "fMRItools", "BayesBrainMap")) %dopar% {
+=======
+    # test
+    q <- foreach::foreach(ii = seq(nN), .packages=c("ciftiTools", "fMRItools")) %dopar% {
+      .libPaths()
+      break
+>>>>>>> parent of ce9e22d (Add debug output in foreach loop)
       if (FORMAT=="CIFTI" || FORMAT=="GIFTI") {
         # Load the workbench.
         if (is.null(wb_path)) {
