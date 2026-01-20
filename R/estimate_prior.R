@@ -747,6 +747,8 @@ estimate_prior <- function(
       usePar <- FALSE
     } else {
       cluster <- parallel::makeCluster(nCores, outfile="")
+      # bug fix: take user libraries into each worker 
+      clusterEvalQ(cluster, .libPaths(Sys.getenv("R_LIBS_USER")))
       doParallel::registerDoParallel(cluster)
     }
   }
