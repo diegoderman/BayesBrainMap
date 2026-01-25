@@ -18,16 +18,17 @@ Authors@R: c(
            role = c("ctb"))
     )
 Maintainer: Amanda Mejia <mandy.mejia@gmail.com>
-Description: Implements Bayesian brain mapping models, including the prior 
-    ICA (independent components analysis) model proposed in Mejia et al. (2020) 
-    <doi:10.1080/01621459.2019.1679638> and the spatial prior ICA model 
-    proposed in proposed in Mejia et al. (2022) 
-    <doi:10.1080/10618600.2022.2104289>. Both models estimate subject-level 
-    brain as deviations from known population-level networks, which are 
-    estimated using standard ICA algorithms. Both models employ an 
-    expectation-maximization algorithm for estimation of the latent brain 
-    networks and unknown model parameters. Includes direct support for 'CIFTI',
-    'GIFTI', and 'NIFTI' neuroimaging file formats.
+Description: Implements Bayesian brain mapping with population-derived priors, 
+    including the original model described in Mejia et al. (2020) 
+    <doi:10.1080/01621459.2019.1679638>, the model with spatial priors described
+    in Mejia et al. (2022) <doi:10.1080/10618600.2022.2104289>, and the model 
+    with population-derived priors on functional connectivity described in Mejia
+    et al. (2025) <doi:10.1093/biostatistics/kxaf022>. Population-derived priors
+    are based on templates representing established brain network maps, for 
+    example derived from independent component analysis (ICA), parcellations, 
+    or other methods.  Model estimation is based on expectation-maximization or 
+    variational Bayes algorithms. Includes direct support for 'CIFTI', 'GIFTI', 
+    and 'NIFTI' neuroimaging file formats.
 Depends: R (>= 3.6.0)
 License: GPL-3
 Additional_repositories: https://inla.r-inla-download.org/R/testing
