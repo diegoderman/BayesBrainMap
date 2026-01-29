@@ -319,8 +319,8 @@ BrainMap <- function(
     scale <- "global"
   }
   stopifnot(is_1(scale_sm_FWHM, "numeric"))
-  if (is.list(nuisance)) { stopifnot(length(nuisance)==nN) }
-  if (is.list(scrub)) { stopifnot(length(scrub)==nN) }
+  #if (is.list(nuisance)) { stopifnot(length(nuisance)==nN) }
+  #if (is.list(scrub)) { stopifnot(length(scrub)==nN) }
   stopifnot(is_1(drop_first, "numeric") && drop_first==round(drop_first))
   if (TR!= "from_xifti_metadata") { stopifnot(fMRItools::is_posNum(TR)) }
   stopifnot(fMRItools::is_posNum(hpf, zero_ok=TRUE))
