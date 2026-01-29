@@ -403,6 +403,7 @@ plot.prior.cifti <- function(x,
 
   if (ss=="var" && var_method=="unbiased") { dat[] <- pmax(1e-6, dat) }
   if (ss=="sd") {
+    dat[] <- pmax(1e-6, dat)
     dat <- sqrt(dat)
     ssname <- paste0("sqrt ", ssname)
   }
@@ -669,8 +670,9 @@ plot.prior.nifti <- function(x,
       ssname, mean="mean", varNN="var", varUB=stop())]]
   } else { stop() }
 
-  if (ss=="var" && var_method=="unbiased") { dat[] <- pmax(0, dat) }
+  if (ss=="var" && var_method=="unbiased") { dat[] <- pmax(1e-6, dat) }
   if (stat=="sd") {
+    dat[] <- pmax(1e-6, dat)
     dat <- sqrt(dat)
     ssname <- paste0("sqrt ", ssname)
   }
