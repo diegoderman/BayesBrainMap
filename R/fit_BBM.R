@@ -319,8 +319,8 @@ fit_BBM <- function(
     scale <- "global"
   }
   stopifnot(is_1(scale_sm_FWHM, "numeric"))
-  if (is.list(nuisance)) { stopifnot(length(nuisance)==nN) }
-  if (is.list(scrub)) { stopifnot(length(scrub)==nN) }
+  #if (is.list(nuisance)) { stopifnot(length(nuisance)==nN) }
+  #if (is.list(scrub)) { stopifnot(length(scrub)==nN) }
   stopifnot(is_1(drop_first, "numeric") && drop_first==round(drop_first))
   if (TR!= "from_xifti_metadata") { stopifnot(fMRItools::is_posNum(TR)) }
   stopifnot(fMRItools::is_posNum(hpf, zero_ok=TRUE))
@@ -357,8 +357,12 @@ fit_BBM <- function(
     if (nCores < 2) {
       usePar <- FALSE
     } else {
-      #cluster <- parallel::makeCluster(nCores)
-      doParallel::registerDoParallel(nCores)
+      cluster <- parallel::makeCluster(nCores)
+      #doParallel::registerDoParallel(nCores)
+      # Evaluate user libraries to each thread through the environment variables.
+      parallel::clusterEvalQ(cluster, {
+        .libPaths(sys.getenv("R_LIBS_USER"))
+      })
     }
   }
 
