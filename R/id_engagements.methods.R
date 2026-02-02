@@ -37,7 +37,7 @@ summary.bMap_eng.cifti <- function(object, ...) {
 #' @rdname summary.bMap_eng.cifti
 #' @export
 #'
-#' @param x The engagements from \code{engagements.cifti}
+#' @param x The engagements from \code{id_engagements.cifti}
 #' @param ... further arguments passed to or from other methods.
 #' @return Nothing, invisibly.
 #' @method print summary.bMap_eng.cifti
@@ -97,7 +97,7 @@ print.bMap_eng.cifti <- function(x, ...) {
 
 #' Plot engagements
 #'
-#' @param x The engagements from \code{engagements.cifti}
+#' @param x The engagements from \code{id_engagements.cifti}
 #' @param stat \code{"engaged"} (default), \code{"pvals"}, \code{"pvals_adj"},
 #'  \code{"tstats"}, \code{"vars"}, or \code{"thresholded"}.
 #' @param test_level If \code{stat} is not \code{"engaged"} or \code{thresholded},
@@ -222,7 +222,7 @@ summary.bMap_eng.nifti <- function(object, ...) {
 #' @rdname summary.bMap_eng.nifti
 #' @export
 #'
-#' @param x The engagements from \code{engagements}
+#' @param x The engagements from \code{id_engagements}
 #' @param ... further arguments passed to or from other methods.
 #' @return Nothing, invisibly.
 #' @method print summary.bMap_eng.nifti
@@ -326,7 +326,7 @@ summary.bMap_eng.matrix <- function(object, ...) {
 #' @rdname summary.bMap_eng.matrix
 #' @export
 #'
-#' @param x The engagements from \code{engagements}
+#' @param x The engagements from \code{id_engagements}
 #' @param ... further arguments passed to or from other methods.
 #' @return Nothing, invisibly.
 #' @method print summary.bMap_eng.matrix

@@ -49,9 +49,9 @@
 #'
 #' @examples
 #' \dontrun{
-#'  engagements(bMap_result, alpha=.05, deviation=TRUE)
+#'  id_engagements(fit_BBM_result, alpha=.05, deviation=TRUE)
 #' }
-engagements <- function(
+id_engagements <- function(
   bMap, u=NULL, z=2, alpha=0.01,
   type=c(">", "abs >", "<", "!="),
   method_p=c('BH', 'bonferroni'),

@@ -8,7 +8,7 @@
 #' @export
 #' @method summary bMap.cifti
 summary.bMap.cifti <- function(object, ...) {
-  bMap_params <- lapply(
+  BBM_params <- lapply(
     object$params,
     function(q) {
       if (is.null(q)) { q <- "NULL"};
@@ -18,7 +18,7 @@ summary.bMap.cifti <- function(object, ...) {
 
   x <- c(
     summary(object$subjNet_mean),
-    bMap_params
+    BBM_params
   )
 
   class(x) <- "summary.bMap.cifti"
@@ -35,7 +35,7 @@ summary.bMap.cifti <- function(object, ...) {
 #' @export
 #' @method summary bMap.nifti
 summary.bMap.nifti <- function(object, ...) {
-  bMap_params <- lapply(
+  BBM_params <- lapply(
     object$params,
     function(q) {
       if (is.null(q)) { q <- "NULL"};
@@ -49,7 +49,7 @@ summary.bMap.nifti <- function(object, ...) {
       nV=nrow(object$prior_mean),
       nL=ncol(object$prior_mean)
     ),
-    bMap_params
+    BBM_params
   )
 
   class(x) <- "summary.bMap.nifti"
@@ -66,7 +66,7 @@ summary.bMap.nifti <- function(object, ...) {
 #' @export
 #' @method summary bMap.matrix
 summary.bMap.matrix <- function(object, ...) {
-  bMap_params <- lapply(
+  BBM_params <- lapply(
     object$params,
     function(q) {
       if (is.null(q)) { q <- "NULL"};
@@ -76,7 +76,7 @@ summary.bMap.matrix <- function(object, ...) {
 
   x <- c(
     list(nV=nrow(object$subjNet_mean), nL=ncol(object$subjNet_mean)),
-    bMap_params
+    BBM_params
   )
 
   class(x) <- "summary.bMap.matrix"

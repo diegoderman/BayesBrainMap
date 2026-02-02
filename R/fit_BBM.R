@@ -1196,7 +1196,7 @@ fit_BBM <- function(
   # }
 
   # Params
-  bMap_params <- list(
+  BBM_params <- list(
     GSR=GSR,
     scale=scale, hpf=hpf, TR=TR,
     Q2=Q2, Q2_max=Q2_max, Q2_est=Q2_est,
@@ -1267,7 +1267,7 @@ fit_BBM <- function(
   result$BOLD <- BOLD
   result$mask <- mask2
   result$nuisance <- nmat
-  result$params <- bMap_params
+  result$params <- BBM_params
 
   #record computation time of each algorithm
   result$comptime <- c(as.numeric(t1, units = "secs"),

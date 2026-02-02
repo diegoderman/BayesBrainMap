@@ -28,7 +28,7 @@ add_str <- function(a,b){
 #'
 #' Format the name of an engagement, given parameters of the statistical test.
 #'
-#' @param u,z,type,deviation See \code{\link{engagements}}.
+#' @param u,z,type,deviation See \code{\link{id_engagements}}.
 #' @param collapse If multiple \code{u} or \code{z} were provided, should just
 #'  one name be returned? Default: \code{FALSE}
 #'

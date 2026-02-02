@@ -29,7 +29,7 @@ BrainMap consists of three steps. The main functions associated with each step a
 
 1. Prior estimation: `estimate_prior`. Can export the results with `export_prior`.
 2. BrainMap model estimation (single-subject): `fit_BBM`.
-3. Identification of areas of engagement in each network (or deviation from the prior mean): `engagements`.
+3. Identification of areas of engagement in each network (or deviation from the prior mean): `id_engagements`.
 
 ## Citation
 

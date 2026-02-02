@@ -33,7 +33,7 @@ each step are listed below.
     `export_prior`.
 2.  BrainMap model estimation (single-subject): `fit_BBM`.
 3.  Identification of areas of engagement in each network (or deviation
-    from the prior mean): `engagements`.
+    from the prior mean): `id_engagements`.
 
 ## Citation
 

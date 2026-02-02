@@ -122,8 +122,8 @@ bMap_cii2 <- fit_BBM(
   z, pr_cii, brainstructures="left", maxiter=5, TR="prior", resamp_res=2000
 )
 
-engMap_cii <- engagements(bMap_cii)
-engMap_cii <- engagements(bMap_cii, z=c(0, .1, 3, 11))
+engMap_cii <- id_engagements(bMap_cii)
+engMap_cii <- id_engagements(bMap_cii, z=c(0, .1, 3, 11))
 
 engMap_cii
 plot(engMap_cii)
@@ -223,15 +223,15 @@ bMap_cii <- fit_BBM(cii_fnames[4], brainstructures="left", pr_cii, maxiter=20, Q
 #bMap_rds <- fit_BBM(rds_fnames[4], pr_rds, Q2=0, maxiter=20, TR=.72)
 bMap_cii#; bMap_gii; bMap_rds
 #testthat::expect_equal(bMap_gii$A, bMap_rds$A)
-#engMap_rds <- engagements(bMap_rds)
-engMap_cii <- engagements(bMap_cii)
-plot(engagements(bMap_cii))#; plot(engagements(bMap_gii))
+#engMap_rds <- id_engagements(bMap_rds)
+engMap_cii <- id_engagements(bMap_cii)
+plot(id_engagements(bMap_cii))#; plot(id_engagements(bMap_gii))
 close3d(); close3d()
 
 gamma <- 2
 gamma_scaled <- gamma*sqrt(matrixStats::colVars(bMap_cii$prior_mean))
-eng2 <- engagements(bMap_cii, u=gamma_scaled)
-eng3 <- engagements(bMap_cii, z=gamma)
+eng2 <- id_engagements(bMap_cii, u=gamma_scaled)
+eng3 <- id_engagements(bMap_cii, z=gamma)
 # breaks
 eng2 <- cbind(eng2[[2]]$engaged[,1], eng2[[3]]$engaged[,2], eng2[[4]]$engaged[,3])
 eng3 <- eng3[[2]]$engaged
@@ -266,7 +266,7 @@ bMap <- fit_BBM(cii, tm, scale=FALSE, miniter=2, maxiter=3, Q2=0)
 plot(bMap)
 close3d()
 
-engMap <- engagements(bMap)
+engMap <- id_engagements(bMap)
 engMap_fname <- paste0(tempfile(), ".dlabel.nii")
 engMap$engaged <- move_to_mwall(engMap$engaged)
 engMap$engaged$meta$cortex$medial_wall_mask$right <- rep(TRUE, 4002)
@@ -372,5 +372,5 @@ bMap <- fit_BBM(
   miniter=1, maxiter=1, mask=mask_fname, Q2=0, TR=.72
 )
 bMap
-eng <- engagements(bMap, u=.2)
+eng <- id_engagements(bMap, u=.2)
 eng
