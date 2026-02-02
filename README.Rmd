@@ -28,7 +28,7 @@ This package contains functions implementing the BrainMap model proposed in Meji
 BrainMap consists of three steps. The main functions associated with each step are listed below. 
 
 1. Prior estimation: `estimate_prior`. Can export the results with `export_prior`.
-2. BrainMap model estimation (single-subject): `BrainMap`.
+2. BrainMap model estimation (single-subject): `fit_BBM`.
 3. Identification of areas of engagement in each network (or deviation from the prior mean): `engagements`.
 
 ## Citation
@@ -63,15 +63,16 @@ To analyze or visualize CIFTI-format data, `BayesBrainMap` depends on the
 It can be installed from the 
 [HCP website](https://www.humanconnectome.org/software/get-connectome-workbench).
 
-For fitting the BrainMap model with surface-based priors 
-(`spatial_model=TRUE` in `BrainMap()`), INLA is required. Due to a CRAN 
-policy, INLA cannot be installed automatically. You can obtain it by running
+For fitting the BrainMap model with surface-based priors (with 
+`spatial_model=TRUE` in `fit_BBM()`, as is the default), INLA is required. 
+Due to a CRAN policy, INLA cannot be installed automatically. 
+You can obtain it by running
 `install.packages("INLA", repos=c(getOption("repos"), INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)`. 
 Alternatively, `dep=FALSE` can be used along with manual installation of 
 dependencies as necessary to avoid installing all of the many INLA dependencies,
 most of which are not actually required. Binaries for alternative Linux builds 
 can be added with the command `inla.binary.install()`. Note that INLA is _not_
-required for standard BrainMap.
+required for standard BrainMap (with `spatial_model=FALSE` in `fit_BBM()`).
 
 Depending on the analysis, PARDISO may reduce computation time. To obtain a free
 academic license forINLA-PARDISO, run `inla.pardiso()` in R after running 

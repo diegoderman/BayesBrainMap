@@ -25,7 +25,7 @@ List of two elements: the priors and the variance decomposition.
 There are two version of the variance prior: \code{varUB} gives the
 unbiased variance estimate, and \code{varNN} gives the upwardly-biased
 non-negative variance estimate. Values in \code{varUB} will need to be
-clamped above zero before using in \code{BrainMap}.
+clamped above zero before using in \code{\link{fit_BBM}}.
 }
 \description{
 Estimate variance decomposition and priors from DR estimates.

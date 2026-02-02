@@ -203,9 +203,9 @@
 #' @examples
 #' \dontrun{
 #'  tm <- estimate_prior(cii1_fnames, cii2_fnames, gICA_fname, usePar=FALSE)
-#'  BrainMap(newcii_fname, tm, spatial_model=TRUE, resamp_res=2000, usePar=FALSE)
+#'  fit_BBM(newcii_fname, tm, spatial_model=TRUE, resamp_res=2000, usePar=FALSE)
 #' }
-BrainMap <- function(
+fit_BBM <- function(
   BOLD, prior,
   var_method=c("non-negative", "unbiased"),
   #tinds=NULL,
@@ -279,14 +279,14 @@ BrainMap <- function(
     if (is.null(covariates)) {
       stop("These covariates were used during prior estimation: ", 
         paste0(covariate_names, collapse=", "), ". They must also be provided ", 
-        "to `BrainMap` with the `covariates` argument.")
+        "to `fit_BBM` with the `covariates` argument.")
     }
     stopifnot(is.numeric(covariates) && is.vector(covariates))
     stopifnot(length(covariates) == length(covariate_names))
     if(!all(names(covariates) == covariate_names)) {
       stop("These covariates were used during prior estimation: ", 
         paste0(covariate_names, collapse=", "), ". The same covariates must ", 
-        "also be provided to `BrainMap` with the `covariates` argument. ",
+        "also be provided to `fit_BBM` with the `covariates` argument. ",
         "However, the names for `covariates` provided here differ.")
     }
   } else {
@@ -716,8 +716,8 @@ BrainMap <- function(
       }
     }
     if (!is.list(meshes)) stop('`meshes` must be a list.')
-    if (!all(vapply(meshes, inherits, what="BrainMap_mesh", FALSE))) {
-      stop('Each element of `meshes` should be of class `"BrainMap_mesh"`. See `help(make_mesh)`.')
+    if (!all(vapply(meshes, inherits, what="BBM_mesh", FALSE))) {
+      stop('Each element of `meshes` should be of class `"BBM_mesh"`. See `help(make_mesh)`.')
     }
     ndat_mesh <- sum(vapply(meshes, function(x){sum(x$A)}, 0))
     if (ndat_mesh != nV) {
@@ -1074,7 +1074,7 @@ BrainMap <- function(
 
   theta00 <- theta0
   theta00$nu0_sq <- err_var
-  result <- EM_BrainMap.independent(
+  result <- EM_BBM.independent(
     prior_mean=prior$mean,
     prior_var=prior$var,
     BOLD=BOLD2,
@@ -1113,7 +1113,7 @@ BrainMap <- function(
       doParallel::stopImplicitCluster()
     }
 
-    result <- VB_FCBrainMap(
+    result <- VB_FC_BBM(
         prior_mean = prior$mean,
         prior_var = prior$var,
         prior_FC = prior_FC,
@@ -1145,7 +1145,7 @@ BrainMap <- function(
     theta0$kappa <- rep(kappa_init, nL)
     if(verbose) cat('ESTIMATING SPATIAL MODEL\n')
     t000 <- Sys.time()
-    result <- EM_BrainMap.spatial(prior$mean,
+    result <- EM_BBM.spatial(prior$mean,
                                         prior$var,
                                         meshes,
                                         BOLD=BOLD2,

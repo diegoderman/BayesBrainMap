@@ -1,5 +1,5 @@
-#' @name EM_BrainMap
-#' @rdname EM_BrainMap
+#' @name EM_BBM.spatial
+#' @rdname EM_BBM.spatial
 #'
 #' @title EM Algorithms for Bayesian brain maps
 #'
@@ -8,7 +8,7 @@
 #' @param prior_var  (\eqn{V \times Q} matrix) between-subject variance maps
 #'  for each network in prior
 #' @param meshes \code{NULL} for spatial independence model, otherwise a list of
-#'  objects of class "BrainMap_mesh" containing the triangular mesh (see
+#'  objects of class "BBM_mesh" containing the triangular mesh (see
 #'  \code{\link{make_mesh}}) for each brain structure.
 #' @param BOLD  (\eqn{V \times Q} matrix) dimension-reduced fMRI data
 #' @param theta0 (list) initial guess at parameter values: A (\eqn{QxQ} mixing matrix),
@@ -38,7 +38,7 @@
 #'  computed), and success (flag indicating convergence (\code{TRUE}) or not
 #'  (\code{FALSE}))
 #'
-#' @details \code{EM_BrainMap.spatial} implements the expectation-maximization
+#' @details \code{EM_BBM.spatial} implements the expectation-maximization
 #'  (EM) algorithm described in Mejia et al. (2019+) for estimating the
 #'  subject-level networks and unknown parameters in the Bayesian brain map 
 #'  model with spatial priors on subject effects.
@@ -51,12 +51,12 @@
 #'
 NULL
 
-#' @rdname EM_BrainMap
+#' @rdname EM_BBM.spatial
 # @importFrom INLA inla.spde2.matern inla.qsolve
 #' @importFrom Matrix Diagonal
 #' @importFrom SQUAREM squarem
 #'
-EM_BrainMap.spatial <- function(
+EM_BBM.spatial <- function(
   prior_mean, prior_var, meshes, BOLD,
   theta0, C_diag, H, Hinv,
   maxiter=100,  usePar=FALSE, epsilon=0.001, reduce_dim=TRUE, verbose=FALSE){
@@ -92,7 +92,7 @@ EM_BrainMap.spatial <- function(
   # # Positive change --> search for kappa_max, set kappa_min to kappa1.
   # # Negative change --> search for kappa_min, set kappa_max to kappa1.
   # kappa_min <- kappa_max <- theta0$kappa[1]
-  # theta1 <- UpdateTheta_BrainMap.spatial(prior_mean, prior_var, meshes, BOLD, theta0, C_diag, s0_vec, D, Dinv_s0, common_smoothness=TRUE, verbose=verbose, update='kappa')
+  # theta1 <- UpdateTheta_BBM(prior_mean, prior_var, meshes, BOLD, theta0, C_diag, s0_vec, D, Dinv_s0, common_smoothness=TRUE, verbose=verbose, update='kappa')
   # kappa_diff0 <- theta1$kappa[1] - theta0$kappa[1]
   # theta <- theta0
   #
@@ -105,7 +105,7 @@ EM_BrainMap.spatial <- function(
   #   while(kappa_diff < 0){
   #     if(verbose) cat(paste0('... testing kappa = ',round(kappa_min,3),'\n '))
   #     theta$kappa <- rep(kappa_min, Q)
-  #     theta1 <- UpdateTheta_BrainMap.spatial(prior_mean, prior_var, meshes, BOLD, theta, C_diag, s0_vec, D, Dinv_s0, common_smoothness=TRUE, verbose=verbose, update='kappa')
+  #     theta1 <- UpdateTheta_BBM(prior_mean, prior_var, meshes, BOLD, theta, C_diag, s0_vec, D, Dinv_s0, common_smoothness=TRUE, verbose=verbose, update='kappa')
   #     kappa_diff <- theta1$kappa[1] - theta$kappa[1]
   #     if(kappa_diff > 0) {
   #       #set minimum and stop here
@@ -124,7 +124,7 @@ EM_BrainMap.spatial <- function(
   #   while(kappa_diff > 0){
   #     if(verbose) cat(paste0('... testing kappa = ',round(kappa_max, 3),'\n '))
   #     theta$kappa <- rep(kappa_max, Q)
-  #     theta1 <-  UpdateTheta_BrainMap.spatial(prior_mean, prior_var, meshes, BOLD, theta, C_diag, s0_vec, D, Dinv_s0, common_smoothness=TRUE, verbose=FALSE, update='kappa')
+  #     theta1 <-  UpdateTheta_BBM(prior_mean, prior_var, meshes, BOLD, theta, C_diag, s0_vec, D, Dinv_s0, common_smoothness=TRUE, verbose=FALSE, update='kappa')
   #     kappa_diff <- theta1$kappa[1] - theta$kappa[1]
   #     if(kappa_diff < 0) {
   #       #set maximum and stop here
@@ -144,7 +144,7 @@ EM_BrainMap.spatial <- function(
   # while(kappa_change > epsilon){
   #   if(verbose) cat(paste0('... testing kappa = ',round(kappa_test, 3),'\n '))
   #   theta$kappa <- rep(kappa_test, Q)
-  #   theta1 <-  UpdateTheta_BrainMap.spatial(prior_mean, prior_var, meshes, BOLD, theta, C_diag, s0_vec, D, Dinv_s0, common_smoothness=TRUE, verbose=FALSE, update='kappa')
+  #   theta1 <-  UpdateTheta_BBM(prior_mean, prior_var, meshes, BOLD, theta, C_diag, s0_vec, D, Dinv_s0, common_smoothness=TRUE, verbose=FALSE, update='kappa')
   #   kappa_diff <- theta1$kappa[1] - theta$kappa[1] #which direction is the estimate of kappa moving in?
   #   if(kappa_diff > 0) {
   #     kappa_min <- theta1$kappa[1]  #reset minimum to current value
@@ -169,7 +169,7 @@ EM_BrainMap.spatial <- function(
   t00000 <- Sys.time()
   update_nu0sq <- FALSE # for spatial
   saveRDS(list(
-    par=theta0_vec, fixptfn = UpdateThetaSQUAREM_BrainMap, objfn=LL_SQUAREM,
+    par=theta0_vec, fixptfn = UpdateThetaSQUAREM_BBM.spatial, objfn=LL_SQUAREM,
     control=list(trace=verbose, intermed=TRUE, tol=epsilon, maxiter=maxiter),
     tmean=prior_mean, tvar=prior_var, meshes=meshes,
     BOLD=BOLD, C_diag=C_diag, H=H, Hinv=Hinv,
@@ -177,7 +177,7 @@ EM_BrainMap.spatial <- function(
     update_nu0sq=update_nu0sq, verbose=verbose
   ), "bMap_spatial_pre_squarem1")
   result_squarem <- squarem(
-    par=theta0_vec, fixptfn = UpdateThetaSQUAREM_BrainMap, objfn=LL_SQUAREM,
+    par=theta0_vec, fixptfn = UpdateThetaSQUAREM_BBM.spatial, objfn=LL_SQUAREM,
     control=list(trace=verbose, intermed=TRUE, tol=epsilon, maxiter=maxiter),
     prior_mean, prior_var, meshes,
     BOLD, C_diag, H=H, Hinv=Hinv,
@@ -201,7 +201,7 @@ EM_BrainMap.spatial <- function(
 
   ### Compute final posterior mean of subject networks
   if(verbose) cat('Computing final posterior mean of subject networks \n')
-  mu_cov_s <- UpdateTheta_BrainMap.spatial(prior_mean,
+  mu_cov_s <- UpdateTheta_BBM(prior_mean,
                                              prior_var,
                                              meshes,
                                              BOLD,
@@ -230,8 +230,8 @@ EM_BrainMap.spatial <- function(
   )
 }
 
-#' @rdname EM_BrainMap
-EM_BrainMap.independent <- function(
+#' @rdname EM_BBM.spatial
+EM_BBM.independent <- function(
   prior_mean,
   prior_var,
   BOLD,
@@ -272,7 +272,7 @@ EM_BrainMap.independent <- function(
   t00000 <- Sys.time()
   update_nu0sq <- !reduce_dim
   # saveRDS(list(
-  #   par=theta0_vec, fixptfn = UpdateThetaSQUAREM_BrainMap, objfn=LL_SQUAREM,
+  #   par=theta0_vec, fixptfn = UpdateThetaSQUAREM_BBM.spatial, objfn=LL_SQUAREM,
   #   control=list(trace=verbose, intermed=TRUE, tol=epsilon, maxiter=maxiter),
   #   tmean=prior_mean, tvar=prior_var, meshes=NULL,
   #   BOLD=BOLD, C_diag=C_diag, H=H, Hinv=Hinv,
@@ -280,7 +280,7 @@ EM_BrainMap.independent <- function(
   #   update_nu0sq=update_nu0sq, verbose=TRUE
   # ), "bMap_pre_squarem1")
   result_squarem <- squarem(
-    par=theta0_vec, fixptfn = UpdateThetaSQUAREM_BrainMap, objfn=LL_SQUAREM,
+    par=theta0_vec, fixptfn = UpdateThetaSQUAREM_BBM.spatial, objfn=LL_SQUAREM,
     control=list(trace=verbose, intermed=TRUE, tol=epsilon, maxiter=maxiter),
     prior_mean, prior_var, meshes=NULL,
     BOLD, C_diag, H=H, Hinv=Hinv,
@@ -314,7 +314,7 @@ EM_BrainMap.independent <- function(
 
   ### Compute final posterior mean of subject networks
   if(verbose) cat('Computing final posterior mean of subject networks \n')
-  mu_cov_s <- UpdateTheta_BrainMap.independent(
+  mu_cov_s <- UpdateTheta_iBM(
     prior_mean,
     prior_var,
     BOLD,
@@ -334,7 +334,7 @@ EM_BrainMap.independent <- function(
   #
   #   if(verbose) cat(paste0(' ~~~~~~~~~~~~~~~~~~~~~ ITERATION ', iter, ' ~~~~~~~~~~~~~~~~~~~~~ \n'))
   #   t00 <- Sys.time()
-  #   theta_new = UpdateTheta_BrainMap.independent(prior_mean, prior_var, BOLD, theta, C_diag, update_nu0sq=!reduce_dim, verbose=verbose)
+  #   theta_new = UpdateTheta_iBM(prior_mean, prior_var, BOLD, theta, C_diag, update_nu0sq=!reduce_dim, verbose=verbose)
   #   theta_old <- theta_new
   #   if(verbose) print(Sys.time() - t00)
   #
@@ -455,7 +455,7 @@ compute_LL_std <- function(theta, prior_mean, prior_var, C_diag, BOLD, verbose){
   S_i_expect <- t(theta$Estep$miu_s) # nL x nV
   S_i_sq_expect <- theta$Estep$miu_ssT # nV x nL x nL
 
-  # For reference: code from UpdateTheta_BrainMap.independent
+  # For reference: code from UpdateTheta_iBM
   # A <- theta$A # TxQ
   # nu0_sq <- theta$nu0_sq # const
   # nu0C_inv <- diag(1/(C_diag*nu0_sq)) #Sigma0_inv in matlab code # TxT
@@ -535,15 +535,15 @@ compute_LL_std <- function(theta, prior_mean, prior_var, C_diag, BOLD, verbose){
   sum(LL) #really multiplied by nV but avoid for computational stability
 }
 
-#' @name UpdateTheta_BrainMap
-#' @rdname UpdateTheta_BrainMap
+#' @name UpdateTheta_BBM
+#' @rdname UpdateTheta_BBM
 #'
 #' @title Parameter Estimates in EM Algorithm for Bayesian brain map
 #'
 #' @param prior_mean (\eqn{V \times Q} matrix) mean maps for each network in prior
 #' @param prior_var (\eqn{V \times Q} matrix) between-subject variance maps for each network in prior
 #' @param meshes \code{NULL} for spatial independence model, otherwise a list of
-#'  objects of class "BrainMap_mesh" containing the triangular mesh (see
+#'  objects of class "BBM_mesh" containing the triangular mesh (see
 #'  \code{\link{make_mesh}}) for each brain structure.
 #' @param BOLD  (\eqn{V \times Q} matrix) dimension-reduced fMRI data
 #' @param theta (list) current parameter estimates
@@ -567,12 +567,12 @@ compute_LL_std <- function(theta, prior_mean, prior_var, C_diag, BOLD, verbose){
 #'
 NULL
 
-#' @rdname UpdateTheta_BrainMap
+#' @rdname UpdateTheta_BBM
 #'
 #' @importFrom stats optimize
 # @importFrom INLA inla.qsolve inla.qinv inla.setOption
 #' @importFrom Matrix Matrix sparseMatrix
-UpdateTheta_BrainMap.spatial <- function(
+UpdateTheta_BBM <- function(
   prior_mean, prior_var, meshes,
   BOLD, theta, C_diag, H, Hinv, s0_vec, D, Dinv_s0,
   verbose=FALSE, return_MAP=FALSE, update=c('all','kappa','A')){
@@ -915,8 +915,8 @@ UpdateTheta_BrainMap.spatial <- function(
 
 }
 
-#' @rdname UpdateTheta_BrainMap
-UpdateTheta_BrainMap.independent <- function(
+#' @rdname UpdateTheta_BBM
+UpdateTheta_iBM <- function(
   prior_mean, prior_var, BOLD,
   theta, C_diag, H, Hinv,
   update_nu0sq =TRUE, return_MAP=FALSE, verbose=TRUE){
@@ -1091,7 +1091,7 @@ compute_mu_s <- function(y_vec, D, Dinv_s0, R_inv, theta, P, C_diag){
 #' Compute SPDE matrices (F, G and GFinvG) and prior precision matrix for S
 #'
 #' @param meshes \code{NULL} for spatial independence model, otherwise a list of
-#'  objects of class "BrainMap_mesh" containing the triangular mesh (see
+#'  objects of class "BBM_mesh" containing the triangular mesh (see
 #'  \code{\link{make_mesh}}) for each brain structure.
 #' @param kappa Current estimates of SPDE parameter kappa for each latent field
 #' @param C1 Constant, equal to \eqn{1/(4*pi)} for a 2-dimensional field with alpha=2
@@ -1111,7 +1111,7 @@ compute_R_inv <- function(meshes, kappa, C1=1/(4*pi), rm_extra=FALSE){
   if(length(kappa)==1) onekappa <- TRUE
   if(onekappa) kappa <- kappa[1]
 
-  if(!inherits(meshes, "list")) stop('meshes argument must be a list of objects of class "BrainMap_mesh"')
+  if(!inherits(meshes, "list")) stop('meshes argument must be a list of objects of class "BBM_mesh"')
 
   #SPDE matrices, needed to construct R_l_inv
   nmeshes <- length(meshes)
@@ -1239,24 +1239,24 @@ bdiag_m <- function(lmat) {
 #' Helper function for SQUAREM for estimating parameters
 #'
 #' @param theta_vec Vector of initial parameter values
-#' @param prior_mean Passed to UpdateTheta_BrainMap function
-#' @param prior_var Passed to UpdateTheta_BrainMap function
-#' @param meshes Passed to UpdateTheta_BrainMap function
-#' @param BOLD Passed to UpdateTheta_BrainMap function
-#' @param C_diag Passed to UpdateTheta_BrainMap function
-#' @param s0_vec Passed to UpdateTheta_BrainMap function
-#' @param D Passed to UpdateTheta_BrainMap function
-#' @param Dinv_s0 Passed to UpdateTheta_BrainMap function
-# @param common_smoothness Passed to UpdateTheta_BrainMap function
+#' @param prior_mean Passed to UpdateTheta_BBM function
+#' @param prior_var Passed to UpdateTheta_BBM function
+#' @param meshes Passed to UpdateTheta_BBM function
+#' @param BOLD Passed to UpdateTheta_BBM function
+#' @param C_diag Passed to UpdateTheta_BBM function
+#' @param s0_vec Passed to UpdateTheta_BBM function
+#' @param D Passed to UpdateTheta_BBM function
+#' @param Dinv_s0 Passed to UpdateTheta_BBM function
+# @param common_smoothness Passed to UpdateTheta_BBM function
 #' @param update_nu0sq For non-spatial model: updating \code{nu0sq} is recommended
 #'  if dimension reduction was not performed, and is not recommended if it was.
-#' @param verbose Passed to UpdateTheta_BrainMap function
+#' @param verbose Passed to UpdateTheta_BBM function
 #'
 #' @return Vector of updated parameter values
 #'
 #' @keywords internal
 #'
-UpdateThetaSQUAREM_BrainMap <- function(
+UpdateThetaSQUAREM_BBM.spatial <- function(
   theta_vec,
   prior_mean, prior_var, meshes,
   BOLD, C_diag, H, Hinv,
@@ -1286,7 +1286,7 @@ UpdateThetaSQUAREM_BrainMap <- function(
   #if(verbose) cat('~~~~~~~~~~~ UPDATING PARAMETER ESTIMATES ~~~~~~~~~~~ \n')
 
   if(do_spatial){
-    theta_new <- UpdateTheta_BrainMap.spatial(
+    theta_new <- UpdateTheta_BBM(
       prior_mean,
       prior_var,
       meshes,
@@ -1303,7 +1303,7 @@ UpdateThetaSQUAREM_BrainMap <- function(
     )
   }
   if(!do_spatial){
-    theta_new <- UpdateTheta_BrainMap.independent(
+    theta_new <- UpdateTheta_iBM(
       prior_mean,
       prior_var,
       BOLD,

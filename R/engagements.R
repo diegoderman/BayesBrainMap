@@ -3,7 +3,7 @@
 #' Identify areas of engagement in each network from the result of (spatial)
 #'  Bayesian brain mapping.
 #'
-#' @param bMap Fitted (spatial) Bayesian brain map from \code{\link{BrainMap}}.
+#' @param bMap Fitted (spatial) Bayesian brain map from \code{\link{fit_BBM}}.
 #' @param u,z Set a threshold value for engagement? A threshold value can be
 #'  specified directly with \code{u}, or a z-score-like threshold in terms of
 #'  standard deviations (the SD of values in the mean prior) can be specified

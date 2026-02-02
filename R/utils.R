@@ -55,7 +55,7 @@ make_mask <- function(BOLD, meanTol=-Inf, varTol=1e-6, verbose=TRUE){
 #' @param par Vector of length two containing values of log kappa and log residual variance at which to compute log likelihood
 #' @param delta Estimate of delta (subject effect or deviation)
 #' @param D_diag Diagonal values of D matrix (prior standard deviations)
-#' @param mesh Object of class "BrainMap_mesh" containing the triangular mesh (see \code{\link{make_mesh}})
+#' @param mesh Object of class "BBM_mesh" containing the triangular mesh (see \code{\link{make_mesh}})
 #' @param C1 For the unit variance case, \eqn{\tau^2 = C1/\kappa^2}, where \eqn{C1 = 1/(4\pi)} when \eqn{\alpha=2}, \eqn{\nu=1}, \eqn{d=2}
 #' @param Q Equal to the number of networks for the common smoothness model, or NULL for the network-specific smoothness model
 #'

@@ -86,7 +86,7 @@ summary.bMap.matrix <- function(object, ...) {
 #' @rdname summary.bMap.cifti
 #' @export
 #'
-#' @param x The result of \code{BrainMap} with CIFTI data
+#' @param x The result of \code{\link{fit_BBM}} with CIFTI data
 #' @param ... further arguments passed to or from other methods.
 #' @return Nothing, invisibly.
 #' @method print summary.bMap.cifti
@@ -200,9 +200,9 @@ print.bMap.matrix <- function(x, ...) {
   print.summary.bMap.matrix(summary(x))
 }
 
-#' Plot BrainMap estiamte
+#' Plot fit_BBM estiamte
 #'
-#' @param x The result of \code{BrainMap} with CIFTI data
+#' @param x The result of \code{\link{fit_BBM}} with CIFTI data
 #' @param what The \code{"maps"} (default) on the brain, or the \code{"FC"} 
 #'  matrix. If both are desired, use two separate \code{plot} calls to first
 #'  plot the maps and then plot the FC.
@@ -344,7 +344,7 @@ plot.bMap.cifti <- function(x,
 
 #' Plot prior
 #'
-#' @param x The result of \code{BrainMap} with NIFTI data
+#' @param x The result of \code{\link{fit_BBM}} with NIFTI data
 #' @param stat \code{"mean"} (default), \code{"se"}
 #' @param plane,n_slices,slices Anatomical plane and which slice indices to show.
 #'  Default: 9 axial slices.
@@ -464,7 +464,7 @@ plot.bMap.nifti <- function(x, stat=c("mean", "se"),
 #'
 #' This feature is not supported yet.
 #'
-#' @param x The result of \code{BrainMap} with NIFTI data
+#' @param x The result of \code{\link{fit_BBM}} with NIFTI data
 #' @param ... Additional arguments
 #' @return Nothing, because an error is raised.
 #' @export

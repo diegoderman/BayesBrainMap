@@ -71,7 +71,7 @@ make_mesh <- function(surf=NULL, inds_data=NULL, inds_mesh=NULL){
     mesh=mesh, A=Amat, spde=spde, n.mesh = mesh$n, 
     inds_data = inds_data, inds_mesh = inds_mesh
   )
-  class(result) <- 'BrainMap_mesh'
+  class(result) <- 'BBM_mesh'
   result
 }
 
@@ -115,6 +115,6 @@ make_mesh_2D <- function(mask){
   result <- list(
     mesh=mesh, A=Amat, spde=spde, mask=mask, n.mask = n.mask, n.mesh = mesh$n
   )
-  class(result) <- 'BrainMap_mesh_2D'
+  class(result) <- 'BBM_mesh_2D'
   result
 }

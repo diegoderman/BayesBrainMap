@@ -31,7 +31,7 @@ each step are listed below.
 
 1.  Prior estimation: `estimate_prior`. Can export the results with
     `export_prior`.
-2.  BrainMap model estimation (single-subject): `BrainMap`.
+2.  BrainMap model estimation (single-subject): `fit_BBM`.
 3.  Identification of areas of engagement in each network (or deviation
     from the prior mean): `engagements`.
 
@@ -68,7 +68,7 @@ Workbench. It can be installed from the [HCP
 website](https://www.humanconnectome.org/software/get-connectome-workbench).
 
 For fitting the BrainMap model with surface-based priors
-(`spatial_model=TRUE` in `BrainMap()`), INLA is required. Due to a CRAN
+(`spatial_model=TRUE` in `fit_BBM()`, as is the default), INLA is required. Due to a CRAN
 policy, INLA cannot be installed automatically. You can obtain it by
 running
 `install.packages("INLA", repos=c(getOption("repos"), INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)`.

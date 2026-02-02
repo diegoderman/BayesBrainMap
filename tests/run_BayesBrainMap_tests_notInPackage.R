@@ -103,22 +103,22 @@ pr_cii <- estimate_prior(
 #   brainstructures=c("left", "right"), mask=c(rep(FALSE, 144), rep(TRUE, 7100), rep(FALSE, 100))
 # )
 
-bMap_cii <- BrainMap(
+bMap_cii <- fit_BBM(
   cii_fnames[4], pr_cii, brainstructures="left", maxiter=5, TR="prior", resamp_res=2000
 )
 
-bMapA_cii <- BrainMap(
+bMapA_cii <- fit_BBM(
   cii_fnames[4], pr_cii, brainstructures="left", maxiter=5, TR="prior", resamp_res=2000,
   scrub=c(seq(7), 10, 51, 78), hpf=0
 )
-bMapB_cii <- BrainMap(
+bMapB_cii <- fit_BBM(
   cii_fnames[4], pr_cii, brainstructures="left", maxiter=5, TR="prior", resamp_res=2000,
   drop_first=6, scrub=c(3, 7, 10, 51, 78), hpf=0
 )
 testthat::expect_equal(bMapA_cii$subjNet_mean$data, bMapB_cii$subjNet_mean$data)
 
 z <- read_cifti(cii_fnames[4], resamp_res=2000)
-bMap_cii2 <- BrainMap(
+bMap_cii2 <- fit_BBM(
   z, pr_cii, brainstructures="left", maxiter=5, TR="prior", resamp_res=2000
 )
 
@@ -133,7 +133,7 @@ pr_cii2 <- estimate_prior(
   cii_fnames[seq(3)], template = template_fname["cii"], TR=.72, FC=TRUE,
   brainstructures=c("left", "right"), FC_nPivots=10, FC_nSamp=1000
 )
-bMap_cii2 <- BrainMap(
+bMap_cii2 <- fit_BBM(
   cii_fnames[4], pr_cii2, brainstructures="left", maxiter=5, TR="prior", resamp_res=2000
 ) # ***summary TRUE
 
@@ -195,7 +195,7 @@ pr_cii <- estimate_prior(
 
 close3d(); close3d(); close3d(); close3d()
 
-# `export_prior` and `BrainMap`: check for same result w/ different file types -----------------
+# `export_prior` and `fit_BBM`: check for same result w/ different file types -----------------
 pr_cii <- estimate_prior(
   cii_fnames[seq(3)], brainstructures="left", template = template_fname["cii"], inds=seq(3),
   scale="global"
@@ -217,10 +217,10 @@ pr_cii2 <- list(read_cifti(out_fname[1]), read_cifti(out_fname[2]), readRDS(out_
 # out_fname=export_prior(pr_rds, tempfile())
 # pr_rds2 <- lapply(out_fname, readRDS)
 
-### `BrainMap` ----
-bMap_cii <- BrainMap(cii_fnames[4], brainstructures="left", pr_cii, maxiter=20, Q2=0, TR=.72)
-#bMap_gii <- BrainMap(giiL_fnames[4], pr_gii, Q2=0, maxiter=20, TR=.72)
-#bMap_rds <- BrainMap(rds_fnames[4], pr_rds, Q2=0, maxiter=20, TR=.72)
+### `fit_BBM` ----
+bMap_cii <- fit_BBM(cii_fnames[4], brainstructures="left", pr_cii, maxiter=20, Q2=0, TR=.72)
+#bMap_gii <- fit_BBM(giiL_fnames[4], pr_gii, Q2=0, maxiter=20, TR=.72)
+#bMap_rds <- fit_BBM(rds_fnames[4], pr_rds, Q2=0, maxiter=20, TR=.72)
 bMap_cii#; bMap_gii; bMap_rds
 #testthat::expect_equal(bMap_gii$A, bMap_rds$A)
 #engMap_rds <- engagements(bMap_rds)
@@ -246,8 +246,8 @@ pr_cii <- estimate_prior(
 #   rds_fnames[seq(3)], template = template_fname["rds"], inds=seq(3),
 #   scale="none", TR=.72, FC=FALSE
 # )
-bMap_cii <- BrainMap(cii_fnames[4], brainstructures="left", pr_cii, maxiter=20, Q2=5, TR=.72)
-#bMap_rds <- BrainMap(rds_fnames[4], pr_rds, Q2=5, maxiter=20, TR=.72)
+bMap_cii <- fit_BBM(cii_fnames[4], brainstructures="left", pr_cii, maxiter=20, Q2=5, TR=.72)
+#bMap_rds <- fit_BBM(rds_fnames[4], pr_rds, Q2=5, maxiter=20, TR=.72)
 #testthat::expect_equal(bMap_cii$theta_MLE, bMap_rds$theta_MLE)
 
 # CIFTI ------------------------------------------------------------------------
@@ -262,7 +262,7 @@ close3d(); close3d()
 
 cii <- read_cifti(cii_fnames[5], brainstructures="all")
 cii$data$cortex_left[33,] <- mean(cii$data$cortex_left[33,])
-bMap <- BrainMap(cii, tm, scale=FALSE, miniter=2, maxiter=3, Q2=0)
+bMap <- fit_BBM(cii, tm, scale=FALSE, miniter=2, maxiter=3, Q2=0)
 plot(bMap)
 close3d()
 
@@ -316,10 +316,10 @@ plot(tm, idx=3)
 close3d(); close3d()
 cii <- read_cifti(cii_fnames[5], brainstructures="left")
 #squarem1 error ... ?
-# BrainMap(cii, tm, brainstructures="left", scale="global", maxiter=7, Q2=0, spatial_model = TRUE)
+# fit_BBM(cii, tm, brainstructures="left", scale="global", maxiter=7, Q2=0, spatial_model = TRUE)
 cii$data$cortex_left[33,] <- mean(cii$data$cortex_left[33,])
 bMap <- testthat::expect_error( # Not supported yet: flat or NA voxels in data, after applying prior mask, with spatial model.
-  BrainMap(cii, tm, brainstructures="left", scale="global", maxiter=7, Q2=0, spatial_model = TRUE, TR=.72)
+  fit_BBM(cii, tm, brainstructures="left", scale="global", maxiter=7, Q2=0, spatial_model = TRUE, TR=.72)
 )
 
 cii <- lapply(cii_fnames[seq(4)], read_xifti, brainstructures="right")
@@ -367,7 +367,7 @@ tm <- estimate_prior(
   FC_nPivots=4, FC_nSamp=100
 )
 tm
-bMap <- BrainMap(
+bMap <- fit_BBM(
   nii_fnames[2], tm, scale=FALSE,
   miniter=1, maxiter=1, mask=mask_fname, Q2=0, TR=.72
 )

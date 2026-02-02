@@ -17,7 +17,7 @@ engagements(
 )
 }
 \arguments{
-\item{bMap}{Fitted (spatial) Bayesian brain map from \code{\link{BrainMap}}.}
+\item{bMap}{Fitted (spatial) Bayesian brain map from \code{\link{fit_BBM}}.}
 
 \item{u, z}{Set a threshold value for engagement? A threshold value can be
 specified directly with \code{u}, or a z-score-like threshold in terms of

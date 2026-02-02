@@ -1,4 +1,4 @@
-#' VB_FCBrainMap
+#' VB_FC_BBM
 #'
 #' VB Algorithm for FC Bayesian brain map
 #'
@@ -52,7 +52,7 @@
 # @importFrom INLA inla.mesh.create
 #' @keywords internal
 #'
-VB_FCBrainMap <- function(
+VB_FC_BBM <- function(
   prior_mean, #VxQ
   prior_var, #VxQ
   prior_FC,

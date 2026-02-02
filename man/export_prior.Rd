@@ -33,7 +33,7 @@ the FC prior and its mean and variance will be included.
 }
 \description{
 Export the priors (mean, variance, and FC) as separate files for
-visualization or processing outside of \code{BayesBrainMap}.
+visualization or processing outside of \code{Bayesfit_BBM}.
 }
 \examples{
 \dontrun{

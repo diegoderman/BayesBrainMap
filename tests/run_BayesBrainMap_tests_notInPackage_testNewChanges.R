@@ -84,7 +84,7 @@ pr_ciiA <- estimate_prior(
   FC_nPivots=10, FC_nSamp=1000
 )
 
-bMap_cii <- BrainMap(
+bMap_cii <- fit_BBM(
   cii_fnames[4], pr_ciiA, brainstructures="left", maxiter=5, TR="prior", resamp_res=2000
 )
 
@@ -161,6 +161,6 @@ stopifnot(
   max(as.matrix(pr_ciiA$prior$mean) - as.matrix(pr_ciiB$prior$mean)) < 1e-8
 )
 
-bMap_cii <- BrainMap(
+bMap_cii <- fit_BBM(
   cii_fnames[4], pr_ciiA, maxiter=5, TR="prior", resamp_res=2000
 )
