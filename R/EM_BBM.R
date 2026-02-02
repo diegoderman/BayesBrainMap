@@ -169,7 +169,7 @@ EM_BBM.spatial <- function(
   t00000 <- Sys.time()
   update_nu0sq <- FALSE # for spatial
   saveRDS(list(
-    par=theta0_vec, fixptfn = UpdateThetaSQUAREM_BBM.spatial, objfn=LL_SQUAREM,
+    par=theta0_vec, fixptfn = UpdateThetaSQUAREM_BBM, objfn=LL_SQUAREM,
     control=list(trace=verbose, intermed=TRUE, tol=epsilon, maxiter=maxiter),
     tmean=prior_mean, tvar=prior_var, meshes=meshes,
     BOLD=BOLD, C_diag=C_diag, H=H, Hinv=Hinv,
@@ -177,7 +177,7 @@ EM_BBM.spatial <- function(
     update_nu0sq=update_nu0sq, verbose=verbose
   ), "bMap_spatial_pre_squarem1")
   result_squarem <- squarem(
-    par=theta0_vec, fixptfn = UpdateThetaSQUAREM_BBM.spatial, objfn=LL_SQUAREM,
+    par=theta0_vec, fixptfn = UpdateThetaSQUAREM_BBM, objfn=LL_SQUAREM,
     control=list(trace=verbose, intermed=TRUE, tol=epsilon, maxiter=maxiter),
     prior_mean, prior_var, meshes,
     BOLD, C_diag, H=H, Hinv=Hinv,
@@ -272,7 +272,7 @@ EM_BBM.independent <- function(
   t00000 <- Sys.time()
   update_nu0sq <- !reduce_dim
   # saveRDS(list(
-  #   par=theta0_vec, fixptfn = UpdateThetaSQUAREM_BBM.spatial, objfn=LL_SQUAREM,
+  #   par=theta0_vec, fixptfn = UpdateThetaSQUAREM_BBM, objfn=LL_SQUAREM,
   #   control=list(trace=verbose, intermed=TRUE, tol=epsilon, maxiter=maxiter),
   #   tmean=prior_mean, tvar=prior_var, meshes=NULL,
   #   BOLD=BOLD, C_diag=C_diag, H=H, Hinv=Hinv,
@@ -280,7 +280,7 @@ EM_BBM.independent <- function(
   #   update_nu0sq=update_nu0sq, verbose=TRUE
   # ), "bMap_pre_squarem1")
   result_squarem <- squarem(
-    par=theta0_vec, fixptfn = UpdateThetaSQUAREM_BBM.spatial, objfn=LL_SQUAREM,
+    par=theta0_vec, fixptfn = UpdateThetaSQUAREM_BBM, objfn=LL_SQUAREM,
     control=list(trace=verbose, intermed=TRUE, tol=epsilon, maxiter=maxiter),
     prior_mean, prior_var, meshes=NULL,
     BOLD, C_diag, H=H, Hinv=Hinv,
@@ -1256,7 +1256,7 @@ bdiag_m <- function(lmat) {
 #'
 #' @keywords internal
 #'
-UpdateThetaSQUAREM_BBM.spatial <- function(
+UpdateThetaSQUAREM_BBM <- function(
   theta_vec,
   prior_mean, prior_var, meshes,
   BOLD, C_diag, H, Hinv,

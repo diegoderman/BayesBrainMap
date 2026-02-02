@@ -48,7 +48,7 @@ struct_prior <- function(prior, FORMAT, mask_input, params, dat_struct, template
 #' Export prior
 #'
 #' Export the priors (mean, variance, and FC) as separate files for
-#'  visualization or processing outside of \code{Bayesfit_BBM}.
+#'  visualization or processing outside of \code{BayesBrainMap}.
 #'
 #' @param x The result of \code{estimate_prior}
 #' @param out_fname Use \code{NULL} (default) to just return the prior
