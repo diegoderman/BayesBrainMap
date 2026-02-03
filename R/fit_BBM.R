@@ -361,7 +361,7 @@ fit_BBM <- function(
       #doParallel::registerDoParallel(nCores)
       # Evaluate user libraries to each thread through the environment variables.
       parallel::clusterEvalQ(cluster, {
-        .libPaths(sys.getenv("R_LIBS_USER"))
+        .libPaths(Sys.getenv("R_LIBS_USER"))
       })
     }
   }
